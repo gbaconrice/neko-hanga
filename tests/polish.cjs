@@ -54,7 +54,7 @@ async function main(){
  await page.clock.runFor(1000);assert((await bar())<full,'the timer runs after the first touch');
  // 版が合うと、つまみとトンボが反応する。「刷る」は光らせない。合うまでは反応しない。
  assert.equal(await page.locator('.kn.locked,#paper.aligned').count(),0);
- assert.equal(await page.locator('#sheetNo').textContent(),'1枚目');assert.equal(await page.locator('#combo.none').count(),1);
+ assert.equal(await page.locator('#sheetNo').textContent(),'印刷工まで3枚');assert.equal(await page.locator('#combo.none').count(),1);
  const knobs=await page.evaluate(()=>{const c=window.__pz.cur();return c.sol.map((s,i)=>s-c.v[i])});
  for(let j=0;j<knobs.length;j++){const b=await page.locator('.kn .dial').nth(j).boundingBox();
   for(let n=0;n<Math.abs(knobs[j]);n++){await page.mouse.move(b.x+b.width*(knobs[j]>0?.8:.2),b.y+b.height/2);await page.mouse.down();await page.mouse.up()}}

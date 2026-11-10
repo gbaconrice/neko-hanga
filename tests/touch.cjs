@@ -30,6 +30,7 @@ const {chromium}=require('playwright');
   const point=a=>({x:cx+r*Math.cos(a*Math.PI/180),y:cy+r*Math.sin(a*Math.PI/180)});
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point(-20)]});
   for(const a of [-10,0,30,60,90])await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[point(a)]});
+  await p.waitForTimeout(150); // 指を止めてから離す(弾いた勢いで回る動きは tests/joy.cjs で確かめる)
   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   assert.equal(await p.evaluate(()=>window.__pz.cur().v[0]),3,'circular touch drag still rotates three steps');
   assert.equal(await p.evaluate(()=>visualViewport.scale),initial.scale);
