@@ -46,6 +46,16 @@
 
 検証は `node tests/animation.cjs`、`node tests/game.cjs`、`node tests/touch.cjs`、`node tests/finish.cjs`、`node tests/polish.cjs`、`node tests/fun.cjs`、`node tests/hook.cjs`、`node tests/joy.cjs`。Chromiumは `CHROMIUM_PATH`、`/usr/bin/chromium`、Playwright付属のものの順で使用します。
 
+## 素材待ちの未完
+
+次の5つは、アート側の素材か決定が届くまで入っていません。必要な素材の形は `HANDOFF.md` にあります。
+
+- 見守る猫（未実装）
+- 題字ロゴE（いまは埋め込みフォントの文字とSVGの判子）
+- タイトルの背景（A・Bが未決定）
+- レア別の動き（★は小物、上位は背景も動く、の差は未実装。レアの区分は★特色5種が同格のまま）
+- 複数の鳴き声（いまは録音1種類を、高さ3通りで再生）
+
 ## GRAVITY連携
 
 `gravity-entry.html` は約1,700文字の入口です。GitHub Pagesの `index.html` を取得し、iframeを使わずに同じ画面へ展開します。HTMLを小さく渡す必要があるときに使えます。GitHub Pagesの公開と、GRAVITY内から外部取得（`fetch`）ができることが前提で、どちらも実機では未確認です。
