@@ -18,7 +18,8 @@ async function main(){
  await page.waitForFunction(()=>window.__pz?.state().artReady);
  assert.equal(await page.locator('#who').textContent(),'テスト刷り師');
  assert.equal(await page.locator('#bGal,#gal,#det').count(),0);
- assert.equal(await page.evaluate(()=>window.__pz.W.length),45);
+ const total=JSON.parse(fs.readFileSync(path.join(root,'art/catalog.json'),'utf8')).length;
+ assert(total>=144);assert.equal(await page.evaluate(()=>window.__pz.W.length),total);
  assert.equal(requests.filter(u=>!u.startsWith('http://127.0.0.1:4173/?')&&!u.includes('cdn.gravity.place')).length,0,'art and sound must work without an asset server');
  // Render all distinct works, mirrored works and all special palettes.
  const art=await page.evaluate(()=>{
@@ -31,7 +32,7 @@ async function main(){
   });
   return {unique:new Set(hashes).size,min:Math.min(...coverage),max:Math.max(...coverage)};
  });
- assert.equal(art.unique,45);assert(art.min>.2&&art.max<.98);
+ assert.equal(art.unique,total);assert(art.min>.2&&art.max<.98);
  await page.screenshot({path:'/workspace/scratch/title.png'});
  await page.click('#bStart');
  await page.waitForFunction(()=>window.__pz.state().meows===1);
@@ -105,7 +106,7 @@ async function main(){
  assert.equal(await page.evaluate(()=>window.scoreMessages.length),2,'one score per play');
  assert.equal(await page.locator('#oGrid .cell').count(),0,'results reset on retry');
  assert.deepEqual(errors,[]);
- console.log('PASS: standalone HTML, storage unavailable, 45 works × 6 palettes, pointer tap/help, reveal, 7 successes, all difficulty tiers, 3 embedded phone sizes, failure/retry/timeout, one score per play.');
+ console.log('PASS: standalone HTML, storage unavailable, all works × 6 palettes, pointer tap/help, reveal, 7 successes, all difficulty tiers, 3 embedded phone sizes, failure/retry/timeout, one score per play.');
  console.log('Artwork ink coverage:',art.min.toFixed(3),art.max.toFixed(3));
  await browser.close();
 }
