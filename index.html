@@ -356,8 +356,9 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
 #over .rank{min-height:0;margin:0;padding:3px 10px 4px;border:2px solid var(--accent);border-radius:7px;color:var(--accent);font-size:15px;font-weight:900;letter-spacing:.12em;transform:rotate(-5deg)}
 #over .head .num{font-size:44px;font-weight:900;line-height:1;color:var(--paper)}
 #over .head .num small{font-size:15px;font-weight:700;color:var(--sub);margin-left:3px}
-.stats{display:flex;gap:6px;justify-content:center;margin:2px 0 0;padding:0;list-style:none}
-.stats li{display:flex;align-items:baseline;gap:5px;padding:3px 10px;border-radius:999px;background:#1c302e;font-size:11px;color:var(--sub);font-weight:700}
+/* 札は1行のまま。★特色が出て入りきらない幅では、次の行へ折り返す */
+.stats{display:flex;flex-wrap:wrap;gap:4px 6px;justify-content:center;margin:2px 0 0;padding:0;list-style:none}
+.stats li{display:flex;flex:none;align-items:baseline;gap:5px;padding:3px 10px;border-radius:999px;background:#1c302e;font-size:11px;color:var(--sub);font-weight:700;white-space:nowrap}
 .stats b{font-size:14px;font-weight:900;color:var(--paper)}
 .stats li[hidden]{display:none}
 #book{align-items:center;justify-content:center;gap:0;padding:2px 0 10px}
@@ -821,6 +822,7 @@ function draw(){
     ctx.save();if(rl<1){ctx.beginPath();ctx.rect(0,0,px*rl,px);ctx.clip()}
     compose(ctx,px,plates,null,cur.va,false,(performance.now()-revealStarted)/1000,1);ctx.restore();
     var r=paper.querySelector('.roller');if(r){if(rl<1)r.style.left=(rl*100)+'%';else r.parentNode.removeChild(r)}
+    if(rl>=1)prePlates=null; // ローラーが通り終わったら、合わせ中の版は手放す(大きなキャンバス3枚ぶんのメモリ)
     return;
   }
   var t=tfs();t.focus=focus;compose(ctx,cv.width,plates,t,cur.va,true,0);
@@ -972,12 +974,15 @@ function newSheet(){
   var sol=ax.map(function(){return (1+rnd(c.range))*(Math.random()<.5?1:-1)});
   cur={va:va,cols:cols(va),ax:ax,M:M,sol:sol,v:ax.map(function(){return 0}),u:c.u,tier:c.tier,moves:0,helped:false,min:sol.reduce(function(a,b){return a+Math.abs(b)},0)};
   return loadWork(va.mi).then(function(){if(!running||request!==sheetRequest)return;
+  prePlates=null;
   focus=null;lockState=[false,false,false];matched=false;hintFor(c);buildKnobs();fit();plates=makePlates(va,cv.width,true);
   if(waitTouch&&dials[0]){var tip=document.createElement('b');tip.className='tip';dials[0].appendChild(tip)}
   // 前の紙を早く刷った分の時間を足す
   lastCarry=lastMode?0:carry;tMax=tLeft=lastMode?LAST_TIME:sheetTime(c,prints)+carry;carry=0;paper.classList.remove('gone');
   if(lastMode){hintOn=true;showHint('刷れたら復活。時間は'+LAST_TIME+'秒です')}
-  if(lastCarry>0){var ce=$('carry');ce.textContent='+'+lastCarry.toFixed(1)+'秒';ce.classList.remove('show');void ce.offsetWidth;ce.classList.add('show')}
+  var ce=$('carry');ce.classList.remove('show');
+  if(lastCarry>0){ce.textContent='+'+lastCarry.toFixed(1)+'秒';void ce.offsetWidth;ce.classList.add('show')}
+  else ce.textContent=''; // 持ち越しがない紙では、前の表示を読み上げ領域に残さない
   lowSec=0;$('tbar').parentNode.classList.remove('low');$('tbar').style.transform='scaleX(1)';busy=false;draw();anim('pin',240);
   }).catch(function(){if(!running||request!==sheetRequest)return;busy=false;toast('絵を読み込めませんでした','ng')});
 }
@@ -1262,7 +1267,7 @@ try{if(new URLSearchParams(location.search).get('check'))openCheck()}catch(e){}
 // 起動時だけ、題字を左から1文字ずつ出し、最後に肉球の判子を押す
 $('logo').classList.add('play');
 // 動作確認用(?debug=1 のときだけ有効)
-try{if(new URLSearchParams(location.search).get('debug'))window.__pz={loadWork:loadWork,compose:compose,catFrame:catFrame,bookTurn:bookTurn,works:function(){return works},animationImages:animationImages,frame:function(v,css,phase){var c=document.createElement('canvas');c.width=c.height=css;compose(c.getContext('2d'),css,makePlates(v,css,false),null,v,false,phase);return c},thumb:thumb,plain:plain,variant:variant,W:W,cur:function(){return cur},state:function(){return {reducedMotion:!!reducedMotion,prints:prints,lives:lives,running:running,busy:busy,streak:streak,meows:meowBuffer?1:0,audioState:audioState,audioPlayed:audioPlayed,activeVoices:activeMeows.length,audioContext:ac?ac.state:'unsupported',audioError:audioError,artReady:artReady,decodedWorks:workCache.size,bookIndex:bookIndex,revealing:revealing,score:score,helps:helps,order:order,ordDone:ordDone,canSkip:!!skipReveal,lastMode:lastMode,lastUsed:lastUsed,fever:fever,feverGauge:feverGauge,lastTick:lastTick,sessionBest:sessionBest,spHide:cur&&cur.va.spHide||0,roll:rollAt(),carry:carry,lastCarry:lastCarry,baseTime:cur?tMax-lastCarry:0,music:music.on,musicNotes:music.notes,tMax:tMax,tLeft:tLeft,moves:cur?cur.moves:0,minMoves:cur?cur.min:0,waitTouch:waitTouch,hero:hero?hero.va.mi:-1,focus:focus}},setLives:function(n,keepLast){lives=n;if(!keepLast)lastUsed=true}/* 終了を確かめるテスト用: 既定でラストチャンスを使用済みにする */,forceSp:function(k){forcedSp=k},rareOff:function(v){rareOff=v},setPrints:function(n){prints=n}}}catch(e){}
+try{if(new URLSearchParams(location.search).get('debug'))window.__pz={loadWork:loadWork,compose:compose,catFrame:catFrame,bookTurn:bookTurn,works:function(){return works},animationImages:animationImages,frame:function(v,css,phase){var c=document.createElement('canvas');c.width=c.height=css;compose(c.getContext('2d'),css,makePlates(v,css,false),null,v,false,phase);return c},thumb:thumb,plain:plain,variant:variant,W:W,cur:function(){return cur},state:function(){return {reducedMotion:!!reducedMotion,prints:prints,lives:lives,running:running,busy:busy,streak:streak,meows:meowBuffer?1:0,audioState:audioState,audioPlayed:audioPlayed,activeVoices:activeMeows.length,audioContext:ac?ac.state:'unsupported',audioError:audioError,artReady:artReady,decodedWorks:workCache.size,bookIndex:bookIndex,revealing:revealing,score:score,helps:helps,order:order,ordDone:ordDone,canSkip:!!skipReveal,prePlates:!!prePlates,lastMode:lastMode,lastUsed:lastUsed,fever:fever,feverGauge:feverGauge,lastTick:lastTick,sessionBest:sessionBest,spHide:cur&&cur.va.spHide||0,roll:rollAt(),carry:carry,lastCarry:lastCarry,baseTime:cur?tMax-lastCarry:0,music:music.on,musicNotes:music.notes,tMax:tMax,tLeft:tLeft,moves:cur?cur.moves:0,minMoves:cur?cur.min:0,waitTouch:waitTouch,hero:hero?hero.va.mi:-1,focus:focus}},setLives:function(n,keepLast){lives=n;if(!keepLast)lastUsed=true}/* 終了を確かめるテスト用: 既定でラストチャンスを使用済みにする */,forceSp:function(k){forcedSp=k},rareOff:function(v){rareOff=v},setPrints:function(n){prints=n}}}catch(e){}
 })();
 </script>
 </body>
