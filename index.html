@@ -214,7 +214,16 @@ var W=[
 // 配色 [薄, 中, 濃]
 var PAL=[['#ffd23f','#ff5d73','#2a6fdb'],['#ffb84d','#e8436e','#1f8a8a'],['#f6e05e','#3ccfb0','#6b4fd8'],['#ffa8b8','#f5a623','#3b3f9c'],
 ['#a8e86a','#ff6f59','#254b8a'],['#fbd87f','#ee6c4d','#33415c'],['#9fdcff','#ff70a6','#3d348b'],['#ffd166','#06b6a4','#c2255c']];
-var PAPER='#f6f0e1';
+// 紙の色
+var PAPERS=['#f6f0e1','#efe4c8','#eaf0ee','#f6e4dc'];
+var TEX_N=3,BG_N=6; // 塗りの質感(ベタ/網点/斜線)・地模様の種類数
+// 刷り違い: 同じ絵柄でも配色・色の入れ替え・質感・地模様・紙・左右反転が変わる
+function variant(mi,n){ // n=刷れた枚数。最初の3枚は素直な刷り
+  var rich=n>=3;
+  return {mi:mi,pal:rnd(PAL.length),sw:rich?rnd(2):0,tex:rich?rnd(TEX_N):0,tp:rnd(2),bg:rich?rnd(BG_N):0,paper:rich?rnd(PAPERS.length):0,flip:rnd(2)};
+}
+function plain(mi){return {mi:mi,pal:mi%PAL.length,sw:0,tex:0,tp:0,bg:0,paper:0,flip:0}}
+function cols(v){var c=PAL[v.pal];return v.sw?[c[1],c[0],c[2]]:[c[0],c[1],c[2]]}
 
 /* ================= ユーティリティ ================= */
 function $(id){return document.getElementById(id)}
@@ -224,9 +233,17 @@ function fgFor(hex){var r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2
 function show(id){['title','game','over','gal'].forEach(function(s){$(s).classList.toggle('on',s===id)})}
 
 /* ================= 描画 ================= */
-function plateCanvas(m,pi,col,px,marks){
+function texMask(g,tex){
+  g.globalCompositeOperation='destination-in';g.beginPath();
+  if(tex===1){var sp=2.3,r=.92,row=0;for(var y=0;y<=100;y+=sp*.866,row++)for(var x=(row%2)*sp/2;x<=100;x+=sp){g.moveTo(x+r,y);g.arc(x,y,r,0,6.2832)}g.fill()}
+  else{g.lineWidth=1.25;for(var d=-100;d<=100;d+=2.5){g.moveTo(d,0);g.lineTo(d+100,100)}g.stroke()}
+  g.globalCompositeOperation='source-over';
+}
+function plateCanvas(v,pi,px,marks){
+  var m=W[v.mi],col=cols(v)[pi];
   var c=document.createElement('canvas');c.width=c.height=px;var g=c.getContext('2d');
   g.scale(px/100,px/100);g.lineCap=g.lineJoin='round';g.fillStyle=g.strokeStyle=col;
+  g.save();if(v.flip){g.translate(100,0);g.scale(-1,1)}
   m.p[pi].forEach(function(s){
     var ko=false;if(s.charAt(0)==='!'){ko=true;s=s.slice(1)}
     g.globalCompositeOperation=ko?'destination-out':'source-over';
@@ -235,7 +252,12 @@ function plateCanvas(m,pi,col,px,marks){
       else g.fill(new Path2D(s));
     }catch(e){}
   });
-  g.globalCompositeOperation='source-over';
+  g.restore();
+  if(v.tex&&pi===v.tp)texMask(g,v.tex);
+  // インクのかすれ
+  g.globalCompositeOperation='destination-out';g.beginPath();
+  for(var k=0;k<90;k++){var x=Math.random()*100,y=Math.random()*100,r=.12+Math.random()*.3;g.moveTo(x+r,y);g.arc(x,y,r,0,6.2832)}
+  g.fill();g.globalCompositeOperation='source-over';
   if(marks){ // トンボ
     g.lineWidth=.8;
     [[7,7],[93,7],[7,93],[93,93]].forEach(function(q){
@@ -245,23 +267,48 @@ function plateCanvas(m,pi,col,px,marks){
   }
   return c;
 }
-function makePlates(mi,pal,px,marks){return [0,1,2].map(function(i){return plateCanvas(W[mi],i,PAL[pal][i],px,marks)})}
-function compose(g,px,pl,tf){
-  g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;
-  g.fillStyle=PAPER;g.fillRect(0,0,px,px);
-  g.globalCompositeOperation='multiply';g.globalAlpha=.93;
+function makePlates(v,px,marks){return [0,1,2].map(function(i){return plateCanvas(v,i,px,marks)})}
+// 地模様(動かない薄刷り)
+function bgDraw(g,v){
+  if(!v.bg)return;
+  g.fillStyle=g.strokeStyle=cols(v)[1];g.globalAlpha=.2;var i,x,y;
+  if(v.bg===1){g.beginPath();g.arc(50,50,37,0,6.2832);g.fill()}
+  else if(v.bg===2){
+    g.save();g.beginPath();g.arc(50,50,39,0,6.2832);g.clip();g.beginPath();
+    for(i=0;i<12;i++){var a=i*Math.PI/6;g.moveTo(50,50);g.lineTo(50+60*Math.cos(a-.13),50+60*Math.sin(a-.13));g.lineTo(50+60*Math.cos(a+.13),50+60*Math.sin(a+.13));g.closePath()}
+    g.fill();g.restore();
+  }
+  else if(v.bg===3){g.beginPath();for(y=18;y<=82;y+=8)for(x=18;x<=82;x+=8){g.moveTo(x+1.8,y);g.arc(x,y,1.8,0,6.2832)}g.fill()}
+  else if(v.bg===4){g.lineWidth=1.6;g.strokeRect(15,15,70,70);g.lineWidth=.5;g.strokeRect(18.5,18.5,63,63)}
+  else{for(y=18;y<82;y+=8)g.fillRect(15,y,70,3.5)}
+  g.globalAlpha=1;
+}
+var NOISE=null;
+function noise(){
+  if(NOISE)return NOISE;
+  var c=document.createElement('canvas');c.width=c.height=128;var g=c.getContext('2d'),i;
+  g.fillStyle='rgba(70,45,20,.08)';for(i=0;i<800;i++)g.fillRect(rnd(128),rnd(128),1,1);
+  g.fillStyle='rgba(255,255,255,.3)';for(i=0;i<250;i++)g.fillRect(rnd(128),rnd(128),1,1);
+  return NOISE=c;
+}
+function compose(g,px,pl,tf,v){
   var k=px/100;
+  g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;
+  g.fillStyle=PAPERS[v.paper]||PAPERS[0];g.fillRect(0,0,px,px);
+  g.setTransform(k,0,0,k,0,0);bgDraw(g,v);
+  g.globalCompositeOperation='multiply';g.globalAlpha=.93;
   pl.forEach(function(c,i){
     var t=(tf&&tf[i])||{x:0,y:0,r:0};
     g.setTransform(1,0,0,1,px/2+t.x*k,px/2+t.y*k);g.rotate(t.r*Math.PI/180);
     g.drawImage(c,-px/2,-px/2,px,px);
   });
   g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.globalCompositeOperation='source-over';
+  try{g.fillStyle=g.createPattern(noise(),'repeat');g.fillRect(0,0,px,px)}catch(e){}
 }
-function thumb(mi,pal,css,tf){
+function thumb(v,css,tf){
   var d=Math.min(2,window.devicePixelRatio||1),px=Math.round(css*d);
   var c=document.createElement('canvas');c.width=c.height=px;
-  compose(c.getContext('2d'),px,makePlates(mi,pal,px,false),tf);
+  compose(c.getContext('2d'),px,makePlates(v,px,false),tf,v);
   return c;
 }
 
@@ -314,7 +361,7 @@ function tfs(){
   cur.ax.forEach(function(a,i){t[a.p][a.t]+=o[i]*(a.t==='r'?cur.u*1.3:cur.u)});
   return t;
 }
-function draw(){if(cur)compose(ctx,cv.width,plates,tfs())}
+function draw(){if(cur)compose(ctx,cv.width,plates,tfs(),cur.va)}
 function hud(){
   var h='';for(var i=0;i<LIVES;i++)h+=i<lives?'●':'<s>●</s>';
   $('lives').innerHTML=h;$('cnt').textContent=prints;
@@ -329,10 +376,10 @@ function buildKnobs(){
   var box=$('knobs'),n=cur.ax.length;box.innerHTML='';dials=[];
   for(var j=0;j<n;j++){(function(j){
     var cell=document.createElement('div');cell.className='kn'+(n%2&&j===n-1?' one':'');
-    var col=PAL[cur.pal][cur.ax[j].p],aw=ARW[cur.ax[j].t];
+    var col=cur.cols[cur.ax[j].p],aw=ARW[cur.ax[j].t];
     cell.style.setProperty('--c',col);
     var idx=[j];for(var i=0;i<n;i++)if(i!==j&&cur.M[i][j])idx.push(i);
-    var tags=idx.map(function(i){var c=PAL[cur.pal][cur.ax[i].p];return '<span class="tag" style="background:'+c+';color:'+fgFor(c)+'">'+ICON[cur.ax[i].t]+'</span>'}).join('');
+    var tags=idx.map(function(i){var c=cur.cols[cur.ax[i].p];return '<span class="tag" style="background:'+c+';color:'+fgFor(c)+'">'+ICON[cur.ax[i].t]+'</span>'}).join('');
     cell.innerHTML='<span class="ar">'+aw[0]+'</span><div class="mid"><div class="dial"><i></i></div><div class="tags">'+tags+'</div></div><span class="ar">'+aw[1]+'</span>';
     box.appendChild(cell);dials[j]=cell.querySelector('.dial');bindKnob(cell,j);
   })(j)}
@@ -359,15 +406,15 @@ function bindKnob(cell,j){
 function newSheet(){
   var c=cfg(prints);
   if(!bag.length){bag=[];for(var i=0;i<W.length;i++)bag.push(i);shuffle(bag)}
-  var mi=bag.pop(),pal=rnd(PAL.length);
+  var va=variant(bag.pop(),prints);
   var mov=shuffle([0,1,2]).slice(0,c.mov),ax=[];
   mov.forEach(function(p,k){ax.push({p:p,t:'x'},{p:p,t:'y'});if(k<c.rot)ax.push({p:p,t:'r'})});
   var n=ax.length,M=ax.map(function(_,i){return ax.map(function(_,j){return i===j?1:0})});
   var L=c.links,guard=0;
   while(L>0&&guard++<60){var j=1+rnd(n-1),i2=rnd(j);if(!M[i2][j]){M[i2][j]=Math.random()<.5?1:-1;L--}}
   var sol=ax.map(function(){return (1+rnd(c.range))*(Math.random()<.5?1:-1)});
-  cur={mi:mi,pal:pal,ax:ax,M:M,sol:sol,v:ax.map(function(){return 0}),u:c.u};
-  buildKnobs();fit();plates=makePlates(mi,pal,cv.width,true);
+  cur={va:va,cols:cols(va),ax:ax,M:M,sol:sol,v:ax.map(function(){return 0}),u:c.u};
+  buildKnobs();fit();plates=makePlates(va,cv.width,true);
   tMax=tLeft=c.time;$('tbar').style.transform='scaleX(1)';draw();
 }
 function toast(msg,cls){
@@ -388,7 +435,7 @@ function onPrint(){
   if(!running||busy)return;au();
   var ok=offs().every(function(o){return o===0});
   if(ok){
-    prints++;works.push([cur.mi,cur.pal]);collect(cur.mi);hud();sOk();toast('刷り上がり！','ok');nextSheet();
+    prints++;works.push(cur.va);collect(cur.va.mi);hud();sOk();toast('「'+W[cur.va.mi].n+'」完成！','ok');nextSheet();
   }else{
     lives--;hud();sNg();toast('ズレてる！','ng');
     if(lives<=0){busy=true;anim('pshake',320,gameOver)}else anim('pshake',320);
@@ -408,7 +455,7 @@ function gameOver(){
   $('oNum').textContent=prints;
   var g=$('oGrid');g.innerHTML='';
   if(!works.length)g.innerHTML='<div class="empty">まだ1枚も刷れていません。<br>トンボ（＋印）をよく見て合わせよう</div>';
-  works.forEach(function(w){var c=document.createElement('div');c.className='cell';var t=document.createElement('div');t.className='th';t.appendChild(thumb(w[0],w[1],84));c.appendChild(t);var s=document.createElement('span');s.textContent=W[w[0]].n;c.appendChild(s);g.appendChild(c)});
+  works.forEach(function(w){var c=document.createElement('div');c.className='cell';var t=document.createElement('div');t.className='th';t.appendChild(thumb(w,84));c.appendChild(t);var s=document.createElement('span');s.textContent=W[w.mi].n;c.appendChild(s);g.appendChild(c)});
   show('over');
 }
 function start(){
@@ -418,18 +465,18 @@ function start(){
 function home(){
   running=false;show('title');
   var h=$('hero');h.innerHTML='';
-  h.appendChild(thumb(rnd(W.length),rnd(PAL.length),150,[{x:0,y:0,r:0},{x:1.6,y:-1.1,r:0},{x:-1.4,y:1.3,r:1.2}]));
+  h.appendChild(thumb(variant(rnd(W.length),9),150,[{x:0,y:0,r:0},{x:1.6,y:-1.1,r:0},{x:-1.4,y:1.3,r:1.2}]));
   $('galN').textContent=seenCount()+' / '+W.length;
 }
 function gallery(all){
   var g=$('gGrid');g.innerHTML='';
   W.forEach(function(m,i){
     var c=document.createElement('div');c.className='cell';var t=document.createElement('div'),s=document.createElement('span');
-    if(all||seen[m.n]){t.className='th';t.appendChild(thumb(i,i%PAL.length,84));s.textContent=m.n}
+    if(all||seen[m.n]){t.className='th';t.appendChild(thumb(plain(i),84));s.textContent=m.n}
     else{t.className='th q';t.textContent='？';s.textContent='???'}
     c.appendChild(t);c.appendChild(s);g.appendChild(c);
   });
-  $('galInfo').textContent=seenCount()+' / '+W.length+' 柄 ・ 配色 '+PAL.length+' 種';
+  $('galInfo').textContent=seenCount()+' / '+W.length+' 柄 ・ 刷り違いあり';
   show('gal');
 }
 
@@ -454,7 +501,7 @@ $('mute').addEventListener('click',function(){
 });
 window.addEventListener('resize',function(){
   document.documentElement.style.setProperty('--top',topInset()+'px');
-  if(running&&cur){if(fit())plates=makePlates(cur.mi,cur.pal,cv.width,true);draw()}
+  if(running&&cur){if(fit())plates=makePlates(cur.va,cv.width,true);draw()}
 });
 document.addEventListener('contextmenu',function(e){e.preventDefault()});
 
@@ -473,6 +520,8 @@ function loadUser(){
 document.documentElement.style.setProperty('--top',topInset()+'px');
 home();loadUser();requestAnimationFrame(loop);
 try{if(new URLSearchParams(location.search).get('gallery'))gallery(true)}catch(e){}
+// 動作確認用(?debug=1 のときだけ有効)
+try{if(new URLSearchParams(location.search).get('debug'))window.__pz={cur:function(){return cur},state:function(){return {prints:prints,lives:lives,running:running,busy:busy}},setPrints:function(n){prints=n}}}catch(e){}
 })();
 </script>
 </body>
