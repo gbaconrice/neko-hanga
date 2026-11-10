@@ -5,7 +5,7 @@ const root=path.join(__dirname,'..');
 const errors=[],requests=[];
 async function main(){
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||(fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),headless:true,args:['--no-sandbox']});
- const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2});
+ const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:2,reducedMotion:'reduce'});
  page.on('pageerror',e=>errors.push(e.message));
  page.on('request',r=>requests.push(r.url()));
  await page.addInitScript(()=>{
@@ -16,9 +16,9 @@ async function main(){
  await page.clock.install();
  await page.goto('http://127.0.0.1:4173/?debug=1&top=98');
  await page.waitForFunction(()=>window.__pz?.state().artReady);
- assert.equal(await page.locator('#who').textContent(),'刷り師：テスト刷り師');
+ assert.equal(await page.locator('#who').textContent(),'テスト刷り師');
  assert.equal(await page.locator('#bGal,#gal,#det').count(),0);
- assert.equal(await page.evaluate(()=>window.__pz.W.length),18);
+ assert.equal(await page.evaluate(()=>window.__pz.W.length),45);
  assert.equal(requests.filter(u=>!u.startsWith('http://127.0.0.1:4173/?')&&!u.includes('cdn.gravity.place')).length,0,'art and sound must work without an asset server');
  // Render all distinct works, mirrored works and all special palettes.
  const art=await page.evaluate(()=>{
@@ -31,7 +31,7 @@ async function main(){
   });
   return {unique:new Set(hashes).size,min:Math.min(...coverage),max:Math.max(...coverage)};
  });
- assert.equal(art.unique,18);assert(art.min>.1&&art.max<.7);
+ assert.equal(art.unique,45);assert(art.min>.2&&art.max<.98);
  await page.screenshot({path:'/workspace/scratch/title.png'});
  await page.click('#bStart');
  await page.waitForFunction(()=>window.__pz.state().meows===1);
@@ -42,6 +42,17 @@ async function main(){
  await page.click('#bHelp');
  assert.equal(await page.evaluate(()=>window.__pz.state().helps),0);
  async function solve(){await page.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});await page.click('#bPrint')}
+ // An aligned preview must show the same central artwork as the final print.
+ // This catches a central mask or explanatory text obscuring the illustration.
+ await page.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});
+ await page.mouse.click(bounds.x+bounds.width*.8,bounds.y+30);
+ await page.mouse.click(bounds.x+bounds.width*.2,bounds.y+30);
+ assert(await page.evaluate(()=>{
+  const p=window.__pz,c=document.querySelector('#cv'),t=p.thumb(p.cur().va,c.width/Math.min(2,devicePixelRatio),true);
+  const x=Math.floor(c.width*.25),w=Math.floor(c.width*.5);
+  const a=c.getContext('2d').getImageData(x,x,w,w).data,b=t.getContext('2d').getImageData(x,x,w,w).data;
+  return a.every((n,i)=>n===b[i]);
+ }),'central artwork remains fully visible while aligning');
  await page.screenshot({path:'/workspace/scratch/adjusting.png'});
  const hidden=await page.locator('#cv').evaluate(c=>c.toDataURL());
  await solve();
@@ -70,7 +81,7 @@ async function main(){
   await page.waitForTimeout(350);
   const layout=await page.evaluate(()=>{
    const b=document.querySelector('#bPrint').getBoundingClientRect(),c=document.querySelector('#paper').getBoundingClientRect(),h=document.querySelector('#knobs').getBoundingClientRect();
-   return {buttonBottom:b.bottom,paperBottom:c.bottom,knobTop:h.top,paperTop:c.top,labelBottom:document.querySelector('#printLabel').getBoundingClientRect().bottom,paperWidth:c.width,viewport:innerHeight};
+   return {buttonBottom:b.bottom,paperBottom:c.bottom,knobTop:h.top,paperTop:c.top,labelBottom:document.querySelector('#hint').getBoundingClientRect().bottom,paperWidth:c.width,viewport:innerHeight};
   });
   assert(layout.buttonBottom<=layout.viewport,'print button visible '+JSON.stringify(size));
   assert(layout.paperBottom<=layout.knobTop+1,'paper does not overlap knobs '+JSON.stringify({size,layout}));
@@ -94,7 +105,7 @@ async function main(){
  assert.equal(await page.evaluate(()=>window.scoreMessages.length),2,'one score per play');
  assert.equal(await page.locator('#oGrid .cell').count(),0,'results reset on retry');
  assert.deepEqual(errors,[]);
- console.log('PASS: standalone HTML, storage unavailable, 18 works × 6 palettes, pointer tap/help, reveal, 7 successes, all difficulty tiers, 3 embedded phone sizes, failure/retry/timeout, one score per play.');
+ console.log('PASS: standalone HTML, storage unavailable, 45 works × 6 palettes, pointer tap/help, reveal, 7 successes, all difficulty tiers, 3 embedded phone sizes, failure/retry/timeout, one score per play.');
  console.log('Artwork ink coverage:',art.min.toFixed(3),art.max.toFixed(3));
  await browser.close();
 }
