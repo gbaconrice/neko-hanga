@@ -1,0 +1,24 @@
+name: test
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save playwright sharp
+      - run: npx playwright install --with-deps chromium
+      - run: sudo mkdir -p /workspace/scratch && sudo chown -R "$USER" /workspace
+      - name: Serve the game
+        run: python3 -m http.server 4173 >/dev/null 2>&1 &
+      - run: node tests/animation.cjs
+      - run: node tests/game.cjs
+      - run: node tests/touch.cjs
+      - run: node tests/finish.cjs
+      - run: node tests/polish.cjs

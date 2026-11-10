@@ -52,19 +52,22 @@ async function main(){
  await page.mouse.up();
  assert.equal((await st(page)).focus,null);assert.equal(await page.locator('.tip').count(),0);
  await page.clock.runFor(1000);assert((await bar())<full,'the timer runs after the first touch');
- // 版が合うと、つまみと「刷る」が反応する。合うまでは反応しない。
- assert.equal(await page.locator('#bPrint.ready,.kn.locked,#paper.aligned').count(),0);
+ // 版が合うと、つまみとトンボが反応する。「刷る」は光らせない。合うまでは反応しない。
+ assert.equal(await page.locator('.kn.locked,#paper.aligned').count(),0);
  assert.equal(await page.locator('#sheetNo').textContent(),'1枚目');assert.equal(await page.locator('#combo.none').count(),1);
  const knobs=await page.evaluate(()=>{const c=window.__pz.cur();return c.sol.map((s,i)=>s-c.v[i])});
  for(let j=0;j<knobs.length;j++){const b=await page.locator('.kn .dial').nth(j).boundingBox();
   for(let n=0;n<Math.abs(knobs[j]);n++){await page.mouse.move(b.x+b.width*(knobs[j]>0?.8:.2),b.y+b.height/2);await page.mouse.down();await page.mouse.up()}}
- assert.equal(await page.locator('#bPrint.ready').count(),1,'the print button lights up when every plate is aligned');
+ assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#bPrint')).animationName),'none','the print button does not light up');
+ const mv=await st(page),neat=mv.moves===mv.minMoves;assert(mv.moves>=mv.minMoves&&mv.minMoves>0);
  assert.equal(await page.locator('.kn.locked').count(),knobs.length);assert.equal(await page.locator('#paper.aligned').count(),1);
  assert((await page.locator('#paper .lk').count())>=4,'rings pulse on the registration marks');
  // 完成の瞬間: 背景は中央から広がる。広がりきると、控えと同じ絵になる。
  await page.click('#bPrint');
  assert.equal(await page.locator('#toast b').textContent().then(s=>/^\+\d+$/.test(s)),true,'the gained points are shown large');
- assert.equal(await page.locator('#combo').textContent(),'1連続中　次の得点 ×1.1');assert.equal(await page.locator('#bPrint.ready').count(),0);
+ assert.equal(await page.locator('#combo').textContent(),'1連続中　次の得点 ×1.1');
+ assert.equal((await page.locator('#toast').textContent()).includes('むだなし'),neat,'the neat bonus needs the fewest steps');
+ assert.equal(await page.evaluate(()=>window.__pz.works()[0].tags.includes('むだなし')),neat);
  const corner=()=>page.locator('#cv').evaluate(c=>{const d=c.getContext('2d').getImageData(4,4,1,1).data;return Math.abs(d[0]-245)+Math.abs(d[1]-239)+Math.abs(d[2]-222)});
  assert((await corner())<12,'the corner is still paper when the print lands');
  await page.clock.runFor(600);
@@ -95,7 +98,8 @@ async function main(){
 
  // 残り時間が少なくなると、バーが警告表示になる。次の紙で消える。
  assert.equal(await page.locator('.bar.low').count(),0);
- await page.clock.runFor(41500); // 1コマずつ進める(ゲーム内の時間は1コマ最大0.1秒)
+ const lim=await st(page);assert(lim.tMax<45&&lim.tMax>=38,'the time limit shrinks as sheets go by '+lim.tMax);
+ await page.clock.runFor(Math.round((lim.tLeft-3.5)*1000)); // 1コマずつ進める(ゲーム内の時間は1コマ最大0.1秒)
  await page.waitForFunction(()=>document.querySelector('.bar.low'));
  assert.equal((await st(page)).lives,3,'the warning appears before the time runs out');
  await solve(page);
@@ -122,7 +126,11 @@ async function main(){
  const played=(await st(page)).audioPlayed;await page.click('#bookCanvas');await page.clock.runFor(300);
  assert.equal((await st(page)).audioPlayed,played,'tapping a page stays quiet');
  assert.equal(await page.locator('#over .lbl').count(),0,'no heading label on the result');
- assert.equal(await page.locator('#oPrints').textContent(),'5枚');assert((await page.locator('#oRank').textContent()).length>0);
+ assert.equal(await page.locator('#oPrints').textContent(),'5枚');
+ // ページには加点と見どころが出て、いちばん高得点の1枚にだけ札が付く。
+ assert(/^\+\d+点$/.test(await page.locator('#bookPts').textContent()));
+ const bestAt=await page.evaluate(()=>{const w=window.__pz.works();let b=0;w.forEach((x,i)=>{if(x.pts>w[b].pts)b=i});return b});
+ assert.equal(await page.locator('#bookBest').isVisible(),(await st(page)).bookIndex===bestAt);assert((await page.locator('#oRank').textContent()).length>0);
  for(let i=2;i<5;i++){await page.click('#bookNext');await page.waitForFunction(n=>window.__pz.state().bookIndex===n,i)}
  assert(await page.locator('#bookNext').isDisabled());
  assert.equal(await page.locator('#bookCount').textContent(),'5 / 5');
@@ -139,6 +147,25 @@ async function main(){
  await page.evaluate(()=>window.__pz.setLives(1));await page.click('#bPrint');await page.waitForFunction(()=>!window.__pz.state().running);
  assert(await page.locator('#bookEmpty').isVisible());assert(!(await page.locator('#bookPage').isVisible()));
  await page.close();
+
+ // 動作確認: 題字を5回タップで開き、項目が並ぶ。
+ const chk=await open('http://127.0.0.1:4173/?debug=1&top=98');
+ assert.equal(await chk.locator('#check.on').count(),0);
+ for(let i=0;i<5;i++)await chk.click('#logo');
+ assert.equal(await chk.locator('#check.on').count(),1);
+ const items=await chk.locator('#checkList dt').allTextContents();
+ assert(['GRAVITYの中','SDK','名前','上の余白','音'].every(k=>items.includes(k)),'check items '+items);
+ assert((await chk.locator('#checkList').textContent()).includes('98px'));
+ await chk.click('#checkClose');assert.equal(await chk.locator('#check.on').count(),0);
+ // 途中で閉じると、その時点の得点を送る。終了時は、より高いときだけ送り直す。
+ await chk.click('#bStart');await chk.waitForFunction(()=>!window.__pz.state().busy);
+ await chk.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});await chk.click('#bPrint');await chk.waitForFunction(()=>!window.__pz.state().busy);
+ await chk.evaluate(()=>window.dispatchEvent(new Event('pagehide')));
+ const mid=await chk.evaluate(()=>window.scoreMessages.map(m=>m.score));assert.equal(mid.length,1);assert.equal(mid[0],(await st(chk)).score);
+ await chk.evaluate(()=>window.dispatchEvent(new Event('pagehide')));assert.equal(await chk.evaluate(()=>window.scoreMessages.length),1,'the same score is not sent twice');
+ await chk.evaluate(()=>window.__pz.setLives(1));await chk.click('#bPrint');await chk.waitForFunction(()=>!window.__pz.state().running);
+ assert.equal(await chk.evaluate(()=>window.scoreMessages.length),1,'game over does not resend an unchanged score');
+ await chk.close();
 
  // GRAVITY用の入口: 5000文字未満。iframeなしで本体を展開し、そのまま遊べて得点を送る。
  assert(fs.readFileSync(path.join(root,'gravity-entry.html'),'utf8').length<5000);
