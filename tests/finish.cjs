@@ -26,6 +26,7 @@ const {chromium}=require('playwright');
   });
   assert.equal(await p.evaluate(()=>window.__pz.state().audioContext),'running');
   await p.waitForTimeout(150);
+  await p.waitForTimeout(600); // 背景が広がりきってから比べる
   await p.evaluate(()=>{window.firstPrint=document.querySelector('#cv').getContext('2d').getImageData(0,0,document.querySelector('#cv').width,document.querySelector('#cv').height).data});
   await p.waitForTimeout(650);
   const motion=await p.evaluate(()=>{
