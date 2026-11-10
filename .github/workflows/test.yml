@@ -17,6 +17,8 @@ jobs:
       - run: sudo mkdir -p /workspace/scratch && sudo chown -R "$USER" /workspace
       - name: Serve the game
         run: python3 -m http.server 4173 >/dev/null 2>&1 &
+      - run: pip install fonttools brotli
+      - run: python3 scripts/build-font.py --check
       - run: node tests/animation.cjs
       - run: node tests/game.cjs
       - run: node tests/touch.cjs

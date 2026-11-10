@@ -167,7 +167,27 @@ async function main(){
  assert.equal(await chk.evaluate(()=>window.scoreMessages.length),1,'game over does not resend an unchanged score');
  await chk.close();
 
+ // 回帰: 成功→失敗→成功で、連続倍率の表示が同じ文言でも再び現れる。
+ const combo=await open('http://127.0.0.1:4173/?debug=1&top=98');
+ await combo.click('#bStart');await combo.waitForFunction(()=>!window.__pz.state().busy);
+ const comboState=()=>combo.locator('#combo').evaluate(e=>({hidden:e.classList.contains('none'),text:e.textContent,opacity:getComputedStyle(e).opacity}));
+ assert((await comboState()).hidden,'no multiplier before the first print');
+ await solve(combo);await combo.waitForFunction(()=>!window.__pz.state().busy);
+ let cs=await comboState();assert(!cs.hidden);assert.equal(cs.text,'1連続中　次の得点 ×1.1');
+ await combo.click('#bPrint');await combo.waitForFunction(()=>{const s=window.__pz.state();return s.lives===2&&!s.busy});
+ assert((await comboState()).hidden,'a miss hides the multiplier');
+ await solve(combo);await combo.waitForFunction(()=>!window.__pz.state().busy);
+ cs=await comboState();assert.equal((await st(combo)).streak,1);
+ assert(!cs.hidden,'the multiplier shows again after success, miss, success '+JSON.stringify(cs));assert.equal(cs.text,'1連続中　次の得点 ×1.1');
+ await combo.clock.runFor(400);assert.equal((await comboState()).opacity,'1');
+ await combo.close();
+
  // GRAVITY用の入口: 5000文字未満。iframeなしで本体を展開し、そのまま遊べて得点を送る。
+ // フォントのライセンス: 配布するHTMLに著作権表記とOFL全文が入り、fonts/OFL.txt と一致する。
+ const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),ofl=fs.readFileSync(path.join(root,'fonts/OFL.txt'),'utf8').replace(/\r\n/g,'\n').trim();
+ const fontBlock=html.match(/\/\* FONT_START \*\/([\s\S]*?)\/\* FONT_END \*\//)[1];
+ assert(fontBlock.includes(ofl),'index.html carries the full OFL text');
+ assert(ofl.startsWith('Copyright 2021 The Zen Maru Gothic Project Authors')&&ofl.includes('SIL OPEN FONT LICENSE Version 1.1'));
  assert(fs.readFileSync(path.join(root,'gravity-entry.html'),'utf8').length<5000);
  const entry=await open('http://127.0.0.1:4173/gravity-entry.html?debug=1&top=98');
  assert.equal(await entry.locator('iframe').count(),0);
@@ -182,6 +202,6 @@ async function main(){
 
  assert.deepEqual(errors,[]);
  await browser.close();
- console.log('PASS: logo reveal and stamp, sentence rules, embedded rounded font, quiet title art, plate lock and ready feedback, first-touch timer and knob hint, plate focus, background bloom, reveal skip by paper/print button and auto-advance, low-time warning, storybook (one work per page, animation, replay voice, arrows, swipe, keyboard, boundaries, empty state, phone layouts), bounded decoded artwork cache, GRAVITY entry loader without iframe.');
+ console.log('PASS: combo label after success-miss-success, font license notice in HTML, logo reveal and stamp, sentence rules, embedded rounded font, quiet title art, plate lock and ready feedback, first-touch timer and knob hint, plate focus, background bloom, reveal skip by paper/print button and auto-advance, low-time warning, storybook (one work per page, animation, replay voice, arrows, swipe, keyboard, boundaries, empty state, phone layouts), bounded decoded artwork cache, GRAVITY entry loader without iframe.');
 }
 main().catch(e=>{console.error(e);process.exit(1)});
