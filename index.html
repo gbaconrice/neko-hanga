@@ -585,8 +585,41 @@ function beep(f,d,type,v,f2){
 }
 function sTick(){beep(1250,.018,'square',.03,700);try{if(navigator.vibrate)navigator.vibrate(4)}catch(e){}}
 function sOk(){beep(520,.12,'triangle',.09);setTimeout(function(){beep(780,.2,'triangle',.09)},110)}
-// 猫の鳴き声(合成)。pitch=高さの倍率
+// 猫の鳴き声(録音)。sounds/ から読み込み、読めなければ合成音で代用する
+var SND_BASES=['sounds/','https://gbaconrice.github.io/pittari-insatsujo/sounds/','https://raw.githubusercontent.com/gbaconrice/pittari-insatsujo/main/sounds/'];
+var MEOW_SHORT=11,MEOW_ALL=13; // meow01〜11=ふつう、12〜13=特色刷り用の長め
+var meows=[],meowsLong=[],sndBusy=false,lastMeow=-1;
+function loadMeows(){
+  var a=au();if(!a||sndBusy||meows.length||!window.fetch)return;
+  sndBusy=true;
+  function one(base,i,cb){
+    fetch(base+'meow'+(i<10?'0':'')+i+'.mp3').then(function(r){if(!r.ok)throw 0;return r.arrayBuffer()})
+      .then(function(b){return new Promise(function(res,rej){a.decodeAudioData(b,res,rej)})})
+      .then(function(buf){cb(buf)}).catch(function(){cb(null)});
+  }
+  function store(i){return function(buf){if(buf)(i<=MEOW_SHORT?meows:meowsLong).push(buf)}}
+  (function tryBase(bi){
+    if(bi>=SND_BASES.length){sndBusy=false;return}
+    one(SND_BASES[bi],1,function(buf){
+      if(!buf)return tryBase(bi+1);
+      meows.push(buf);for(var i=2;i<=MEOW_ALL;i++)one(SND_BASES[bi],i,store(i));
+    });
+  })(0);
+}
+// pitch=高さの倍率
 function meow(pitch,long){
+  var a=au();if(!a)return;
+  var set=long&&meowsLong.length?meowsLong:meows;
+  if(!set.length)return meowSynth(pitch,long);
+  try{
+    var k=rnd(set.length);if(set.length>1&&set===meows&&k===lastMeow)k=(k+1)%set.length;
+    if(set===meows)lastMeow=k;
+    var src=a.createBufferSource(),g=a.createGain();
+    src.buffer=set[k];src.playbackRate.value=Math.min(1.15,.94+((pitch||1)-1)*.5+Math.random()*.08);
+    g.gain.value=.85;src.connect(g);g.connect(a.destination);src.start(a.currentTime+.08);
+  }catch(e){}
+}
+function meowSynth(pitch,long){
   var a=au();if(!a)return;
   try{
     var t=a.currentTime+.09,d=long?.8:.4+Math.random()*.14,f=(pitch||1)*(500+Math.random()*130);
@@ -829,7 +862,7 @@ function gameOver(){
   show('over');
 }
 function start(){
-  au();prints=0;lives=LIVES;streak=0;score=0;maxStreak=0;spGot=0;order=null;ordDone=0;helps=HELP_START;works=[];bag=[];sent=false;running=true;busy=false;cur=null;
+  au();loadMeows();prints=0;lives=LIVES;streak=0;score=0;maxStreak=0;spGot=0;order=null;ordDone=0;helps=HELP_START;works=[];bag=[];sent=false;running=true;busy=false;cur=null;
   show('game');hud();newSheet();anim('pin',240);
 }
 function home(){
@@ -889,7 +922,7 @@ $('bHelp').addEventListener('click',useHelp);
 $('dClose').addEventListener('click',function(){$('det').classList.remove('on')});
 $('dNext').addEventListener('click',detailNext);
 $('mute').addEventListener('click',function(){
-  muted=!muted;this.textContent=muted?'音 OFF':'音 ON';this.classList.toggle('off',muted);if(!muted)sTick();
+  muted=!muted;this.textContent=muted?'音 OFF':'音 ON';this.classList.toggle('off',muted);if(!muted){sTick();loadMeows()}
 });
 window.addEventListener('resize',function(){
   document.documentElement.style.setProperty('--top',topInset()+'px');
@@ -913,7 +946,7 @@ document.documentElement.style.setProperty('--top',topInset()+'px');
 home();loadUser();requestAnimationFrame(loop);
 try{if(new URLSearchParams(location.search).get('gallery'))gallery(true)}catch(e){}
 // 動作確認用(?debug=1 のときだけ有効)
-try{if(new URLSearchParams(location.search).get('debug'))window.__pz={thumb:thumb,plain:plain,variant:variant,W:W,cur:function(){return cur},state:function(){return {prints:prints,lives:lives,running:running,busy:busy,streak:streak,score:score,helps:helps,order:order,ordDone:ordDone}},setLives:function(n){lives=n},setPrints:function(n){prints=n}}}catch(e){}
+try{if(new URLSearchParams(location.search).get('debug'))window.__pz={thumb:thumb,plain:plain,variant:variant,W:W,cur:function(){return cur},state:function(){return {prints:prints,lives:lives,running:running,busy:busy,streak:streak,meows:meows.length+meowsLong.length,score:score,helps:helps,order:order,ordDone:ordDone}},setLives:function(n){lives=n},setPrints:function(n){prints=n}}}catch(e){}
 })();
 </script>
 </body>
