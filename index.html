@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ぴったり印刷所</title>
+<script src="https://cdn.gravity.place/fe/sdk/index-1.0.2.min.js"></script>
+<style>
+:root{--top:0px;--bg:#23262d;--paper:#f6f0e1;--ink:#f3ecdc;--accent:#ff5d73;--sub:#9aa0ad}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;overscroll-behavior:none;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
+  user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#app{position:fixed;top:0;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;display:flex;flex-direction:column;
+  padding:calc(var(--top) + 8px) 14px calc(env(safe-area-inset-bottom,0px) + 12px)}
+.screen{display:none;flex:1;min-height:0;flex-direction:column}
+.screen.on{display:flex}
+button{font-family:inherit;color:inherit}
+.big{appearance:none;-webkit-appearance:none;border:0;border-radius:14px;height:54px;flex:none;font-size:20px;font-weight:800;
+  letter-spacing:.2em;color:#23262d;background:var(--ink);box-shadow:0 4px 0 #b9b09a}
+.big:active{transform:translateY(3px);box-shadow:0 1px 0 #b9b09a}
+.sub{appearance:none;-webkit-appearance:none;border:2px solid #4a505d;border-radius:14px;height:46px;flex:none;font-size:15px;
+  font-weight:700;background:transparent;color:var(--ink)}
+.sub:active{background:#333843}
+
+/* title */
+#title{align-items:center;justify-content:center;gap:14px;text-align:center}
+#hero{width:150px;height:150px;background:var(--paper);box-shadow:0 8px 22px rgba(0,0,0,.5);transform:rotate(-4deg)}
+#hero canvas,.th canvas{display:block;width:100%;height:100%}
+h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
+#who{font-size:13px;color:var(--sub);min-height:18px}
+.how{font-size:13px;line-height:1.8;color:#cfd3dc;margin:0;padding:0;list-style:none}
+.how b{color:#ffd23f}
+#title .big,#title .sub{width:100%;max-width:300px}
+
+/* game */
+.hud{display:flex;align-items:center;justify-content:space-between;height:38px;flex:none}
+.lives{font-size:18px;letter-spacing:5px;color:var(--accent);min-width:80px}
+.lives s{color:#4a505d;text-decoration:none}
+.count{font-size:14px}
+.count b{font-size:28px;margin-right:3px;font-variant-numeric:tabular-nums}
+.ib{appearance:none;-webkit-appearance:none;border:2px solid #4a505d;background:transparent;border-radius:10px;width:88px;height:38px;font-size:13px;font-weight:700}
+.ib.off{color:#6b7280;text-decoration:line-through}
+.bar{height:8px;border-radius:4px;background:#3a3f4a;overflow:hidden;margin:4px 0 8px;flex:none}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd23f,#ff5d73);transform-origin:left center}
+.stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;touch-action:none}
+.paper{background:var(--paper);box-shadow:0 6px 18px rgba(0,0,0,.45);border-radius:2px}
+.paper canvas{display:block;width:100%;height:100%}
+.paper.pout{animation:pout .34s ease-in forwards}
+.paper.pin{animation:pin .24s ease-out}
+.paper.pshake{animation:pshake .3s}
+@keyframes pout{to{transform:translateX(120%) rotate(8deg);opacity:0}}
+@keyframes pin{from{transform:translateY(-28px);opacity:0}}
+@keyframes pshake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+#toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-6deg);padding:8px 18px;border-radius:8px;
+  font-size:22px;font-weight:900;letter-spacing:.1em;white-space:nowrap;pointer-events:none;opacity:0;border:3px solid currentColor;background:rgba(246,240,225,.92)}
+#toast.ok{color:#1f8a5a}
+#toast.ng{color:#d7263d}
+#toast.show{animation:tst .8s ease-out}
+@keyframes tst{0%{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(1.5)}15%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}75%{opacity:1}100%{opacity:0}}
+.knobs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 0;flex:none}
+.kn{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:60px;border-radius:14px;border:3px solid var(--c);
+  background:#2b2f37;touch-action:none;overflow:hidden;cursor:pointer}
+.kn.one{grid-column:1/-1}
+.ar{align-self:stretch;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:var(--ink);pointer-events:none}
+.ar.hit{background:#4a505d}
+.mid{display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
+.dial{width:28px;height:28px;border-radius:50%;position:relative;border:3px solid var(--c);
+  background:radial-gradient(circle at 35% 30%,#5d6370,#2b2f37 70%);transition:transform .06s linear}
+.dial i{position:absolute;left:50%;top:1px;width:3px;height:9px;margin-left:-1.5px;border-radius:2px;background:#fff}
+.tags{display:flex;gap:3px;height:20px}
+.tag{width:22px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center}
+.tag svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* over / gallery */
+.head{text-align:center;flex:none;padding:6px 0 10px}
+.head .lbl{font-size:13px;color:var(--sub);letter-spacing:.2em}
+.head .num{font-size:56px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
+.head .num small{font-size:18px;margin-left:4px}
+.head h2{margin:4px 0 0;font-size:20px;letter-spacing:.1em}
+.grid{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;display:grid;
+  grid-template-columns:repeat(4,1fr);gap:8px;align-content:start;padding:4px 2px 12px}
+.th{background:var(--paper);aspect-ratio:1/1;box-shadow:0 2px 6px rgba(0,0,0,.4);position:relative}
+.th.q{background:#333843;display:flex;align-items:center;justify-content:center;color:#59606e;font-size:26px;font-weight:900;box-shadow:none}
+.cell{display:flex;flex-direction:column;gap:3px}
+.cell span{font-size:10px;color:var(--sub);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{grid-column:1/-1;text-align:center;color:var(--sub);font-size:13px;padding:24px 0}
+.row{display:flex;gap:10px;flex:none}
+.row>*{flex:1}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="title" class="screen on">
+    <div id="hero"></div>
+    <h1>ぴったり印刷所</h1>
+    <div id="who"></div>
+    <ul class="how">
+      <li>色つきのボタンを押して<b>版のズレ</b>を直す</li>
+      <li>四すみの<b>トンボ（＋印）</b>が重なれば「刷る」</li>
+      <li>ズレたまま刷る・時間切れでライフ −1</li>
+      <li>ボタンの左右を押すと1目盛り、長押しで連続</li>
+    </ul>
+    <button class="big" id="bStart">はじめる</button>
+    <button class="sub" id="bGal">図鑑 <span id="galN"></span></button>
+  </div>
+
+  <div id="game" class="screen">
+    <div class="hud">
+      <div class="lives" id="lives"></div>
+      <div class="count"><b id="cnt">0</b>枚</div>
+      <button class="ib" id="mute">音 ON</button>
+    </div>
+    <div class="bar"><i id="tbar"></i></div>
+    <div class="stage" id="stage">
+      <div class="paper" id="paper"><canvas id="cv"></canvas></div>
+      <div id="toast"></div>
+    </div>
+    <div class="knobs" id="knobs"></div>
+    <button class="big" id="bPrint">刷る</button>
+  </div>
+
+  <div id="over" class="screen">
+    <div class="head">
+      <div class="lbl">本日の刷り上がり</div>
+      <div class="num"><span id="oNum">0</span><small>枚</small></div>
+    </div>
+    <div class="grid" id="oGrid"></div>
+    <div class="row">
+      <button class="sub" id="bHome">タイトル</button>
+      <button class="big" id="bRetry">もう一度</button>
+    </div>
+  </div>
+
+  <div id="gal" class="screen">
+    <div class="head"><h2>図鑑</h2><div class="lbl" id="galInfo"></div></div>
+    <div class="grid" id="gGrid"></div>
+    <div class="row"><button class="sub" id="bBack">もどる</button></div>
+  </div>
+
+</div>
+<script>
+(function(){'use strict';
+/* ================= 調整用の設定 ================= */
+var LIVES=3;            // ライフ数
+var STEP=20;            // つまみ1目盛りの回転角(度)
+var VMAX=12;            // つまみの可動範囲(±目盛り)
+var SDK_TIMEOUT=4000;   // SDK応答の待機上限(ms)
+var STORE_KEY='pittari_zukan_v1';
+// GRAVITY上部UIの回避余白(暫定値。実機で要確認)。URLに ?top=数値 で上書き可
+function topInset(){
+  var q=null;try{q=new URLSearchParams(location.search).get('top')}catch(e){}
+  if(q!==null&&q!==''&&!isNaN(+q))return +q;
+  var embedded=false;try{embedded=window.parent!==window}catch(e){embedded=true}
+  if(!embedded)return 0;
+  return window.innerHeight>=812?98:74;
+}
+// 難易度: n=これまでに刷れた枚数
+function cfg(n){
+  if(n<3) return {mov:1,rot:0,links:0,u:2.6,range:4,time:40};
+  if(n<7) return {mov:2,rot:0,links:0,u:2.2,range:4,time:45};
+  if(n<12)return {mov:2,rot:1,links:0,u:1.9,range:5,time:45};
+  if(n<18)return {mov:2,rot:2,links:1,u:1.6,range:5,time:42};
+  return {mov:2,rot:2,links:Math.min(4,2+((n-18)/6|0)),u:Math.max(1,1.5-(n-18)*.03),range:6,time:Math.max(24,40-(n-18)*.8)};
+}
+
+/* ================= 絵柄データ =================
+   100x100の座標。版は[薄い色, 中間色, 濃い色]の3枚。
+   文字列はSVGパス。S(太さ,パス)=線、K(パス)=その版から抜く。
+   追加するときは W に1行足すだけ。四すみ(トンボ周辺)は空けておく。 */
+function E(x,y,a,b){return 'M'+(x-a)+' '+y+'a'+a+' '+b+' 0 1 0 '+(2*a)+' 0a'+a+' '+b+' 0 1 0 '+(-2*a)+' 0Z'}
+function C(x,y,r){return E(x,y,r,r)}
+function R(x,y,w,h){return 'M'+x+' '+y+'h'+w+'v'+h+'h'+(-w)+'Z'}
+function P(){var p=arguments,s='M'+p[0]+' '+p[1];for(var i=2;i<p.length;i+=2)s+='L'+p[i]+' '+p[i+1];return s+'Z'}
+function S(w,d){return '~'+w+'|'+d}
+function K(d){return '!'+d}
+function ring(x,y,rad,r,n){var o=[];for(var i=0;i<n;i++){var a=-Math.PI/2+i*2*Math.PI/n;o.push(C(+(x+rad*Math.cos(a)).toFixed(1),+(y+rad*Math.sin(a)).toFixed(1),r))}return o}
+function star(x,y,r){var p=[];for(var i=0;i<10;i++){var a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;p.push(+(x+q*Math.cos(a)).toFixed(1),+(y+q*Math.sin(a)).toFixed(1))}return P.apply(null,p)}
+
+var W=[
+{n:'山と朝日',p:[[C(62,36,16)],[P(14,80,44,34,74,80)],[P(40,80,66,46,88,80),R(12,80,76,4)]]},
+{n:'金魚',p:[[E(46,52,22,14)],[P(62,52,86,34,79,52,86,70),P(38,41,52,27,56,42)],[C(34,49,3),S(1.5,C(20,34,4)+C(15,23,2.5)),S(1.5,'M44 46q5 6 0 12M52 45q5 7 0 14')]]},
+{n:'コーヒー',p:[[E(48,79,30,6),'M26 44H70V60Q70 76 48 76Q26 76 26 60Z'],[E(48,45,20,4.5),S(5,'M70 50Q84 50 84 59Q84 68 69 66')],[S(3,'M40 34Q36 28 40 22Q44 16 40 11M54 34Q50 28 54 22Q58 16 54 11')]]},
+{n:'花',p:[ring(50,42,16,11,6),[C(50,42,10)],[S(4,'M50 54V88'),'M50 74Q34 62 27 71Q38 82 50 74Z','M50 68Q66 55 74 63Q64 74 50 68Z']]},
+{n:'富士',p:[[C(50,48,34)],[C(70,30,9)],['M12 82L40 40Q50 34 60 40L88 82Z',K('M40 40Q50 34 60 40L63 46L57 51L50 45L43 51L37 46Z')]]},
+{n:'ロケット',p:[['M42 72Q50 98 58 72Z',C(22,26,2.5),C(80,40,2),C(74,18,3),C(20,60,2)],['M50 12Q66 34 62 72H38Q34 34 50 12Z'],[P(38,54,25,76,38,70),P(62,54,75,76,62,70),C(50,40,6.5),K(C(50,40,3))]]},
+{n:'ねこ',p:[[C(50,56,26)],[P(27,44,29,18,47,33),P(73,44,71,18,53,33),C(35,65,5),C(65,65,5)],[E(40,52,3,5),E(60,52,3,5),P(47,60,53,60,50,64),S(1.5,'M50 64V68M50 68Q46 72 43 69M50 68Q54 72 57 69M30 58H18M30 62L19 66M70 58H82M70 62L81 66')]]},
+{n:'アイス',p:[[P(35,52,65,52,50,90)],[C(50,38,17),C(38,50,6),C(50,52,6),C(62,50,6)],[S(1.5,'M40 60L56 74M46 56L60 64M60 60L44 74M54 56L40 64'),C(57,19,5),S(2,'M57 15Q58 9 64 8')]]},
+{n:'家',p:[[R(28,46,44,36)],[P(18,48,50,20,82,48)],[R(44,62,12,20),R(32,54,8,8),R(60,54,8,8),R(63,24,7,14)]]},
+{n:'ヨット',p:[[P(52,18,52,64,24,64)],[P(57,30,57,64,80,64),C(24,24,8)],['M20 68H82L72 81H30Z',S(2.5,'M54.5 14V68'),S(2,'M14 88q6 -5 12 0t12 0t12 0t12 0t12 0t12 0')]]},
+{n:'きのこ',p:[['M42 54H58L63 86H37Z'],['M17 56Q19 22 50 22Q81 22 83 56Z'],[C(37,40,5),C(57,34,6),C(69,47,4),C(47,49,3),S(2,'M22 86L26 78M30 86V76M72 86V77M78 86L74 79')]]},
+{n:'ロボット',p:[[R(30,26,40,30),R(34,60,32,26)],[C(41,39,7),C(59,39,7),R(42,67,16,9)],[S(3,'M50 26V15'),C(50,13,3.5),C(41,39,2.5),C(59,39,2.5),R(42,49,16,3),R(24,62,8,17),R(68,62,8,17)]]},
+{n:'さくらんぼ',p:[['M52 22Q70 8 84 24Q68 36 52 22Z'],[C(36,66,14),C(63,70,14)],[S(3,'M36 53Q40 30 52 22M63 57Q61 36 52 22'),S(2.5,'M28 62Q29 56 34 55M55 66Q56 60 61 59')]]},
+{n:'電球',p:[[C(50,42,30)],['M50 18Q73 20 71 44Q69 56 60 63H40Q31 56 29 44Q27 20 50 18Z'],[R(40,65,20,5),R(42,72,16,5),R(45,79,10,4),S(2,'M44 62L46 44L50 51L54 44L56 62')]]},
+{n:'傘',p:[['M13 52Q15 18 50 18Q85 18 87 52Z'],['M37 52Q39 22 50 18Q61 22 63 52Z'],[S(3.5,'M50 52V78Q50 87 42 87Q35 87 35 80'),S(3,'M50 18V12'),S(2,'M20 64V70M30 72V78M70 64V70M80 72V78M66 78V84')]]},
+{n:'くじら',p:[[E(42,70,22,8)],['M14 56Q18 34 46 34Q72 34 78 54L88 42L86 68L78 60Q70 80 44 80Q16 80 14 56Z'],[C(29,53,2.5),S(3,'M45 30Q41 19 32 19M47 30Q51 19 60 19'),S(1.5,'M22 64Q30 68 38 64')]]},
+{n:'小鳥',p:[[E(48,54,24,18)],['M40 52Q56 38 70 54Q56 70 40 52Z',P(26,48,12,53,26,58)],[C(35,47,2.5),P(68,48,88,40,86,60),S(2,'M44 72V84M52 72V84M40 84H48M48 84H56')]]},
+{n:'木',p:[[C(50,34,22),C(33,46,14),C(67,46,14)],[C(58,40,15),C(36,40,4),C(44,54,4)],['M44 88L47 54H53L56 88Z',S(2.5,'M24 88H76')]]},
+{n:'月夜',p:[[star(24,26,6),star(76,22,5),star(80,56,4),star(18,58,4)],[C(46,46,24),K(C(57,39,20))],[C(30,78,10),C(45,76,13),C(62,78,10),R(30,78,32,10)]]},
+{n:'ケーキ',p:[[R(26,50,48,28)],['M26 50H74V58Q68 67 62 58Q56 67 50 58Q44 67 38 58Q32 67 26 58Z','M50 26Q61 28 57 41L50 48L43 41Q39 28 50 26Z'],[R(16,78,68,4),R(26,67,48,3),S(2,'M50 26Q51 21 55 20')]]},
+{n:'だるま',p:[[E(50,47,18,14)],[C(50,56,29),K(E(50,47,18,14))],[C(43,46,4),C(57,46,4),S(3,'M36 39Q43 34 48 39M52 39Q57 34 64 39'),S(3,'M40 68Q50 77 60 68')]]},
+{n:'大波',p:[[C(66,34,16)],['M12 72Q22 38 44 44Q60 49 52 62Q66 52 88 70V86H12Z'],['M12 78q9.5 -9 19 0t19 0t19 0t19 0V88H12Z',C(40,38,2),C(50,40,1.5),C(34,44,1.5)]]},
+{n:'てんとう虫',p:[['M10 60Q50 8 90 60Q50 98 10 60Z'],[C(50,56,24)],['M33 40Q50 22 67 40Q50 47 33 40Z',S(2.5,'M50 42V80'),C(39,54,5),C(61,54,5),C(41,69,4),C(59,69,4),S(1.5,'M44 30Q42 22 36 20M56 30Q58 22 64 20')]]},
+{n:'風船',p:[[C(35,36,16)],[C(62,32,16)],[C(49,48,14),S(1.5,'M35 52Q38 70 48 88M62 48Q58 70 50 88M49 62Q47 76 49 88')]]},
+{n:'サボテン',p:[['M35 70H65L61 90H39Z'],['M43 70V30Q43 21 50 21Q57 21 57 30V70Z',S(7,'M43 58H33V44M57 52H67V38')],[S(1.5,'M50 30V34M47 42H53M50 50V54M47 62H53M33 48H36M67 42H64'),C(50,19,4),R(33,67,34,5)]]},
+{n:'カメラ',p:[[R(20,40,60,36)],[C(50,58,14),R(26,33,14,7)],[S(3,C(50,58,14)),C(50,58,5),R(60,33,12,7),C(71,48,2.5)]]},
+{n:'おにぎり',p:[['M50 20Q58 20 64 33L81 66Q85 79 70 79H30Q15 79 19 66L36 33Q42 20 50 20Z'],[C(50,43,5.5),E(33,62,4,2.5),E(67,62,4,2.5)],[R(37,58,26,21)]]},
+{n:'蝶',p:[[C(33,40,16),C(67,40,16)],[C(37,63,11),C(63,63,11),C(33,40,6),C(67,40,6)],[E(50,50,3.5,19),S(1.5,'M50 32Q46 20 38 18M50 32Q54 20 62 18'),C(37,63,3),C(63,63,3)]]},
+{n:'灯台',p:[[P(52,30,94,16,94,44)],['M39 86L44 36H56L61 86Z'],[R(44,24,12,12),P(41,24,50,14,59,24),R(42.5,52,15,7),R(41,68,18,7),S(2.5,'M22 86H78')]]},
+{n:'プレゼント',p:[[R(24,44,52,40)],[R(20,34,60,12),R(45,34,10,50)],[S(3,'M50 34Q36 14 30 24Q28 32 50 34Q64 14 70 24Q72 32 50 34'),S(1.5,'M24 84H76')]]},
+{n:'ドーナツ',p:[[C(50,52,30),K(C(50,52,10))],['M22 50Q24 26 50 24Q76 26 78 50Q72 58 66 52Q60 62 52 56Q44 64 38 56Q30 62 22 50Z',K(C(50,52,12))],[S(2.5,'M36 38L40 34M52 30H57M64 40L67 44M30 46L34 49M46 40L49 44M70 48L66 50')]]}
+];
+// 配色 [薄, 中, 濃]
+var PAL=[['#ffd23f','#ff5d73','#2a6fdb'],['#ffb84d','#e8436e','#1f8a8a'],['#f6e05e','#3ccfb0','#6b4fd8'],['#ffa8b8','#f5a623','#3b3f9c'],
+['#a8e86a','#ff6f59','#254b8a'],['#fbd87f','#ee6c4d','#33415c'],['#9fdcff','#ff70a6','#3d348b'],['#ffd166','#06b6a4','#c2255c']];
+var PAPER='#f6f0e1';
+
+/* ================= ユーティリティ ================= */
+function $(id){return document.getElementById(id)}
+function rnd(n){return Math.floor(Math.random()*n)}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=rnd(i+1),t=a[i];a[i]=a[j];a[j]=t}return a}
+function fgFor(hex){var r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);return (r*.299+g*.587+b*.114)>150?'#23262d':'#fff'}
+function show(id){['title','game','over','gal'].forEach(function(s){$(s).classList.toggle('on',s===id)})}
+
+/* ================= 描画 ================= */
+function plateCanvas(m,pi,col,px,marks){
+  var c=document.createElement('canvas');c.width=c.height=px;var g=c.getContext('2d');
+  g.scale(px/100,px/100);g.lineCap=g.lineJoin='round';g.fillStyle=g.strokeStyle=col;
+  m.p[pi].forEach(function(s){
+    var ko=false;if(s.charAt(0)==='!'){ko=true;s=s.slice(1)}
+    g.globalCompositeOperation=ko?'destination-out':'source-over';
+    try{
+      if(s.charAt(0)==='~'){var i=s.indexOf('|');g.lineWidth=+s.slice(1,i);g.stroke(new Path2D(s.slice(i+1)))}
+      else g.fill(new Path2D(s));
+    }catch(e){}
+  });
+  g.globalCompositeOperation='source-over';
+  if(marks){ // トンボ
+    g.lineWidth=.8;
+    [[7,7],[93,7],[7,93],[93,93]].forEach(function(q){
+      g.beginPath();g.moveTo(q[0]-4.5,q[1]);g.lineTo(q[0]+4.5,q[1]);g.moveTo(q[0],q[1]-4.5);g.lineTo(q[0],q[1]+4.5);g.stroke();
+      g.beginPath();g.arc(q[0],q[1],2.4,0,Math.PI*2);g.stroke();
+    });
+  }
+  return c;
+}
+function makePlates(mi,pal,px,marks){return [0,1,2].map(function(i){return plateCanvas(W[mi],i,PAL[pal][i],px,marks)})}
+function compose(g,px,pl,tf){
+  g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-over';g.globalAlpha=1;
+  g.fillStyle=PAPER;g.fillRect(0,0,px,px);
+  g.globalCompositeOperation='multiply';g.globalAlpha=.93;
+  var k=px/100;
+  pl.forEach(function(c,i){
+    var t=(tf&&tf[i])||{x:0,y:0,r:0};
+    g.setTransform(1,0,0,1,px/2+t.x*k,px/2+t.y*k);g.rotate(t.r*Math.PI/180);
+    g.drawImage(c,-px/2,-px/2,px,px);
+  });
+  g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.globalCompositeOperation='source-over';
+}
+function thumb(mi,pal,css,tf){
+  var d=Math.min(2,window.devicePixelRatio||1),px=Math.round(css*d);
+  var c=document.createElement('canvas');c.width=c.height=px;
+  compose(c.getContext('2d'),px,makePlates(mi,pal,px,false),tf);
+  return c;
+}
+
+/* ================= 音(鳴らなくても進行可) ================= */
+var ac=null,muted=false;
+function au(){
+  if(muted)return null;
+  try{
+    if(!ac){var A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ac=new A()}
+    if(ac.state==='suspended')ac.resume();
+    return ac;
+  }catch(e){return null}
+}
+function beep(f,d,type,v,f2){
+  var a=au();if(!a)return;
+  try{
+    var o=a.createOscillator(),g=a.createGain(),t=a.currentTime;
+    o.type=type||'square';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);
+    g.gain.setValueAtTime(v||.04,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d+.02);
+  }catch(e){}
+}
+function sTick(){beep(900,.03,'square',.025)}
+function sOk(){beep(520,.12,'triangle',.09);setTimeout(function(){beep(780,.2,'triangle',.09)},110)}
+function sNg(){beep(170,.28,'sawtooth',.06,85)}
+
+/* ================= 図鑑(保存は保証なし・できたら使う) ================= */
+var seen={};
+try{(JSON.parse(localStorage.getItem(STORE_KEY)||'[]')||[]).forEach(function(n){seen[n]=1})}catch(e){}
+function collect(mi){seen[W[mi].n]=1;try{localStorage.setItem(STORE_KEY,JSON.stringify(Object.keys(seen)))}catch(e){}}
+function seenCount(){return W.filter(function(m){return seen[m.n]}).length}
+
+/* ================= ゲーム本体 ================= */
+var cv=$('cv'),ctx=cv.getContext('2d'),paper=$('paper');
+var plates=[],cur=null,prints=0,lives=LIVES,works=[],bag=[],tLeft=0,tMax=1,running=false,busy=false,dials=[],sent=false;
+
+function fit(){
+  var r=$('stage').getBoundingClientRect();
+  var s=Math.max(120,Math.floor(Math.min(r.width,r.height)-6));
+  var d=Math.min(2,window.devicePixelRatio||1),px=Math.round(s*d);
+  paper.style.width=paper.style.height=s+'px';
+  if(cv.width!==px){cv.width=cv.height=px;return true}
+  return false;
+}
+function offs(){
+  return cur.ax.map(function(_,i){var s=0;for(var j=0;j<cur.v.length;j++)s+=cur.M[i][j]*(cur.v[j]-cur.sol[j]);return s});
+}
+function tfs(){
+  var o=offs(),t=[0,1,2].map(function(){return {x:0,y:0,r:0}});
+  cur.ax.forEach(function(a,i){t[a.p][a.t]+=o[i]*(a.t==='r'?cur.u*1.3:cur.u)});
+  return t;
+}
+function draw(){if(cur)compose(ctx,cv.width,plates,tfs())}
+function hud(){
+  var h='';for(var i=0;i<LIVES;i++)h+=i<lives?'●':'<s>●</s>';
+  $('lives').innerHTML=h;$('cnt').textContent=prints;
+}
+var ICON={
+  x:'<svg viewBox="0 0 16 16"><path d="M2 8h12M5 5L2 8l3 3M11 5l3 3-3 3"/></svg>',
+  y:'<svg viewBox="0 0 16 16"><path d="M8 2v12M5 5l3-3 3 3M5 11l3 3 3-3"/></svg>',
+  r:'<svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.6-3.7M12 1.5v3.2H8.8"/></svg>'
+};
+var ARW={x:['◀','▶'],y:['▲','▼'],r:['↺','↻']};
+function buildKnobs(){
+  var box=$('knobs'),n=cur.ax.length;box.innerHTML='';dials=[];
+  for(var j=0;j<n;j++){(function(j){
+    var cell=document.createElement('div');cell.className='kn'+(n%2&&j===n-1?' one':'');
+    var col=PAL[cur.pal][cur.ax[j].p],aw=ARW[cur.ax[j].t];
+    cell.style.setProperty('--c',col);
+    var idx=[j];for(var i=0;i<n;i++)if(i!==j&&cur.M[i][j])idx.push(i);
+    var tags=idx.map(function(i){var c=PAL[cur.pal][cur.ax[i].p];return '<span class="tag" style="background:'+c+';color:'+fgFor(c)+'">'+ICON[cur.ax[i].t]+'</span>'}).join('');
+    cell.innerHTML='<span class="ar">'+aw[0]+'</span><div class="mid"><div class="dial"><i></i></div><div class="tags">'+tags+'</div></div><span class="ar">'+aw[1]+'</span>';
+    box.appendChild(cell);dials[j]=cell.querySelector('.dial');bindKnob(cell,j);
+  })(j)}
+}
+function setV(j,n){
+  n=Math.max(-VMAX,Math.min(VMAX,n));if(n===cur.v[j])return false;
+  cur.v[j]=n;dials[j].style.transform='rotate('+(n*STEP)+'deg)';sTick();draw();return true;
+}
+// 左半分=−1 / 右半分=+1。長押しで連続
+function bindKnob(cell,j){
+  var t1=null,t2=null,ars=cell.querySelectorAll('.ar');
+  function stop(){clearTimeout(t1);clearInterval(t2);t1=t2=null;ars[0].classList.remove('hit');ars[1].classList.remove('hit')}
+  function step(dir){if(!running||busy||!cur||!cell.isConnected){stop();return}setV(j,cur.v[j]+dir)}
+  cell.addEventListener('pointerdown',function(e){
+    if(!running||busy)return;e.preventDefault();try{cell.setPointerCapture(e.pointerId)}catch(_){}
+    au();stop();
+    var r=cell.getBoundingClientRect(),dir=e.clientX<r.left+r.width/2?-1:1;
+    ars[dir<0?0:1].classList.add('hit');step(dir);
+    t1=setTimeout(function(){t2=setInterval(function(){step(dir)},110)},380);
+  });
+  cell.addEventListener('pointerup',stop);
+  cell.addEventListener('pointercancel',stop);
+}
+function newSheet(){
+  var c=cfg(prints);
+  if(!bag.length){bag=[];for(var i=0;i<W.length;i++)bag.push(i);shuffle(bag)}
+  var mi=bag.pop(),pal=rnd(PAL.length);
+  var mov=shuffle([0,1,2]).slice(0,c.mov),ax=[];
+  mov.forEach(function(p,k){ax.push({p:p,t:'x'},{p:p,t:'y'});if(k<c.rot)ax.push({p:p,t:'r'})});
+  var n=ax.length,M=ax.map(function(_,i){return ax.map(function(_,j){return i===j?1:0})});
+  var L=c.links,guard=0;
+  while(L>0&&guard++<60){var j=1+rnd(n-1),i2=rnd(j);if(!M[i2][j]){M[i2][j]=Math.random()<.5?1:-1;L--}}
+  var sol=ax.map(function(){return (1+rnd(c.range))*(Math.random()<.5?1:-1)});
+  cur={mi:mi,pal:pal,ax:ax,M:M,sol:sol,v:ax.map(function(){return 0}),u:c.u};
+  buildKnobs();fit();plates=makePlates(mi,pal,cv.width,true);
+  tMax=tLeft=c.time;$('tbar').style.transform='scaleX(1)';draw();
+}
+function toast(msg,cls){
+  var t=$('toast');t.textContent=msg;t.className=cls;void t.offsetWidth;t.className=cls+' show';
+}
+function anim(cls,ms,cb){
+  paper.classList.remove('pout','pin','pshake');void paper.offsetWidth;paper.classList.add(cls);
+  setTimeout(function(){paper.classList.remove(cls);if(cb)cb()},ms);
+}
+function nextSheet(){
+  busy=true;
+  anim('pout',340,function(){
+    if(!running)return;
+    newSheet();anim('pin',240);busy=false;
+  });
+}
+function onPrint(){
+  if(!running||busy)return;au();
+  var ok=offs().every(function(o){return o===0});
+  if(ok){
+    prints++;works.push([cur.mi,cur.pal]);collect(cur.mi);hud();sOk();toast('刷り上がり！','ok');nextSheet();
+  }else{
+    lives--;hud();sNg();toast('ズレてる！','ng');
+    if(lives<=0){busy=true;anim('pshake',320,gameOver)}else anim('pshake',320);
+  }
+}
+function onTimeout(){
+  lives--;hud();sNg();toast('時間切れ','ng');
+  if(lives<=0){busy=true;setTimeout(gameOver,500)}else nextSheet();
+}
+function sendScore(score){
+  // GRAVITY標準ランキングへの通知(1プレイ1回)。受理・表示は実機で確認すること
+  if(sent)return;sent=true;
+  try{window.parent.postMessage({type:'gameOver',score:score},'*')}catch(e){}
+}
+function gameOver(){
+  running=false;busy=false;sendScore(prints);
+  $('oNum').textContent=prints;
+  var g=$('oGrid');g.innerHTML='';
+  if(!works.length)g.innerHTML='<div class="empty">まだ1枚も刷れていません。<br>トンボ（＋印）をよく見て合わせよう</div>';
+  works.forEach(function(w){var c=document.createElement('div');c.className='cell';var t=document.createElement('div');t.className='th';t.appendChild(thumb(w[0],w[1],84));c.appendChild(t);var s=document.createElement('span');s.textContent=W[w[0]].n;c.appendChild(s);g.appendChild(c)});
+  show('over');
+}
+function start(){
+  au();prints=0;lives=LIVES;works=[];bag=[];sent=false;running=true;busy=false;cur=null;
+  show('game');hud();newSheet();anim('pin',240);
+}
+function home(){
+  running=false;show('title');
+  var h=$('hero');h.innerHTML='';
+  h.appendChild(thumb(rnd(W.length),rnd(PAL.length),150,[{x:0,y:0,r:0},{x:1.6,y:-1.1,r:0},{x:-1.4,y:1.3,r:1.2}]));
+  $('galN').textContent=seenCount()+' / '+W.length;
+}
+function gallery(all){
+  var g=$('gGrid');g.innerHTML='';
+  W.forEach(function(m,i){
+    var c=document.createElement('div');c.className='cell';var t=document.createElement('div'),s=document.createElement('span');
+    if(all||seen[m.n]){t.className='th';t.appendChild(thumb(i,i%PAL.length,84));s.textContent=m.n}
+    else{t.className='th q';t.textContent='？';s.textContent='???'}
+    c.appendChild(t);c.appendChild(s);g.appendChild(c);
+  });
+  $('galInfo').textContent=seenCount()+' / '+W.length+' 柄 ・ 配色 '+PAL.length+' 種';
+  show('gal');
+}
+
+/* ================= ループ・イベント ================= */
+var last=0;
+function loop(ts){
+  var dt=Math.min(.1,(ts-last)/1000||0);last=ts;
+  if(running&&!busy&&cur){
+    tLeft-=dt;$('tbar').style.transform='scaleX('+Math.max(0,tLeft/tMax)+')';
+    if(tLeft<=0)onTimeout();
+  }
+  requestAnimationFrame(loop);
+}
+$('bStart').addEventListener('click',start);
+$('bRetry').addEventListener('click',start);
+$('bHome').addEventListener('click',home);
+$('bBack').addEventListener('click',home);
+$('bGal').addEventListener('click',function(){gallery(false)});
+$('bPrint').addEventListener('click',onPrint);
+$('mute').addEventListener('click',function(){
+  muted=!muted;this.textContent=muted?'音 OFF':'音 ON';this.classList.toggle('off',muted);if(!muted)sTick();
+});
+window.addEventListener('resize',function(){
+  document.documentElement.style.setProperty('--top',topInset()+'px');
+  if(running&&cur){if(fit())plates=makePlates(cur.mi,cur.pal,cv.width,true);draw()}
+});
+document.addEventListener('contextmenu',function(e){e.preventDefault()});
+
+/* ================= GRAVITY SDK(無くても遊べる) ================= */
+function withTimeout(p,ms){return Promise.race([p,new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'))},ms)})])}
+function loadUser(){
+  try{
+    var s=window.AgentSDK;if(!s||!s.user||typeof s.user.getMyUserInfo!=='function')return;
+    withTimeout(Promise.resolve(s.user.getMyUserInfo()),SDK_TIMEOUT).then(function(r){
+      var d=(r&&r.data)||r||{},n=d.name||d.user_name;
+      if(n)$('who').textContent='刷り師：'+n;
+    }).catch(function(){});
+  }catch(e){}
+}
+
+document.documentElement.style.setProperty('--top',topInset()+'px');
+home();loadUser();requestAnimationFrame(loop);
+try{if(new URLSearchParams(location.search).get('gallery'))gallery(true)}catch(e){}
+})();
+</script>
+</body>
+</html>
