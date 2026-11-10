@@ -1,0 +1,1226 @@
+[
+  {
+    "file": "tea",
+    "frames": 6,
+    "source": "atlas-00.webp",
+    "catPixels": 33584,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "picnic",
+    "frames": 6,
+    "source": "atlas-00.webp",
+    "catPixels": 31635,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "hydrangea",
+    "frames": 6,
+    "source": "atlas-01.webp",
+    "catPixels": 35010,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "book",
+    "frames": 6,
+    "source": "atlas-01.webp",
+    "catPixels": 34441,
+    "front": true,
+    "floor": true
+  },
+  {
+    "file": "umbrella",
+    "frames": 6,
+    "source": "atlas-02.webp",
+    "catPixels": 34590,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "moon",
+    "frames": 6,
+    "source": "atlas-02.webp",
+    "catPixels": 34405,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "tulip",
+    "frames": 6,
+    "source": "atlas-03.webp",
+    "catPixels": 32016,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "yarn",
+    "frames": 6,
+    "source": "atlas-03.webp",
+    "catPixels": 32967,
+    "front": true,
+    "floor": true
+  },
+  {
+    "file": "boat",
+    "frames": 6,
+    "source": "atlas-04.webp",
+    "catPixels": 28812,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "cake",
+    "frames": 6,
+    "source": "atlas-04.webp",
+    "catPixels": 36241,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "mushroom",
+    "frames": 6,
+    "source": "atlas-05.webp",
+    "catPixels": 36975,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "sunflower",
+    "frames": 6,
+    "source": "atlas-05.webp",
+    "catPixels": 26842,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "gift",
+    "frames": 6,
+    "source": "atlas-06.webp",
+    "catPixels": 32286,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "window",
+    "frames": 6,
+    "source": "atlas-06.webp",
+    "catPixels": 27179,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "rocking-horse",
+    "frames": 6,
+    "source": "atlas-07.webp",
+    "catPixels": 27864,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "olive",
+    "frames": 6,
+    "source": "atlas-07.webp",
+    "catPixels": 34351,
+    "front": true,
+    "floor": true
+  },
+  {
+    "file": "shell",
+    "frames": 6,
+    "source": "atlas-08.webp",
+    "catPixels": 38663,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "garden",
+    "frames": 6,
+    "source": "atlas-08.webp",
+    "catPixels": 34178,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "bakery",
+    "frames": 6,
+    "source": "atlas-09.webp",
+    "catPixels": 34681,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "guitar",
+    "frames": 6,
+    "source": "atlas-09.webp",
+    "catPixels": 28685,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "train",
+    "frames": 6,
+    "source": "atlas-10.webp",
+    "catPixels": 29077,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "candy",
+    "frames": 6,
+    "source": "atlas-10.webp",
+    "catPixels": 34803,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "cherry-blossom",
+    "frames": 6,
+    "source": "atlas-11.webp",
+    "catPixels": 30364,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "treehouse",
+    "frames": 6,
+    "source": "atlas-11.webp",
+    "catPixels": 34121,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "winter",
+    "frames": 6,
+    "source": "atlas-12.webp",
+    "catPixels": 27576,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "pancakes",
+    "frames": 6,
+    "source": "atlas-12.webp",
+    "catPixels": 36634,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "apple",
+    "frames": 6,
+    "source": "atlas-13.webp",
+    "catPixels": 36386,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "lotus",
+    "frames": 6,
+    "source": "atlas-13.webp",
+    "catPixels": 35149,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "balloon",
+    "frames": 6,
+    "source": "atlas-14.webp",
+    "catPixels": 27817,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "mandarin",
+    "frames": 6,
+    "source": "atlas-14.webp",
+    "catPixels": 29790,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "acorn",
+    "frames": 6,
+    "source": "atlas-15.webp",
+    "catPixels": 23132,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "pie",
+    "frames": 6,
+    "source": "atlas-15.webp",
+    "catPixels": 22948,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "wreath",
+    "frames": 6,
+    "source": "atlas-16.webp",
+    "catPixels": 27251,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "snowglobe",
+    "frames": 6,
+    "source": "atlas-16.webp",
+    "catPixels": 24388,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "lantern",
+    "frames": 6,
+    "source": "atlas-17.webp",
+    "catPixels": 26189,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "rose",
+    "frames": 6,
+    "source": "atlas-17.webp",
+    "catPixels": 38380,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "calico",
+    "frames": 6,
+    "source": "atlas-18.webp",
+    "catPixels": 26327,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "tuxedo",
+    "frames": 6,
+    "source": "atlas-18.webp",
+    "catPixels": 26816,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "siamese",
+    "frames": 6,
+    "source": "atlas-19.webp",
+    "catPixels": 22094,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "russian-blue",
+    "frames": 6,
+    "source": "atlas-19.webp",
+    "catPixels": 19226,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "scottish",
+    "frames": 6,
+    "source": "atlas-20.webp",
+    "catPixels": 32848,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "persian",
+    "frames": 6,
+    "source": "atlas-20.webp",
+    "catPixels": 35077,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "maine-coon",
+    "frames": 6,
+    "source": "atlas-21.webp",
+    "catPixels": 31438,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "american-shorthair",
+    "frames": 6,
+    "source": "atlas-21.webp",
+    "catPixels": 27971,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "siamese-window",
+    "frames": 6,
+    "source": "atlas-23.webp",
+    "catPixels": 24670,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "ragdoll-roll",
+    "frames": 6,
+    "source": "atlas-23.webp",
+    "catPixels": 38455,
+    "front": false,
+    "floor": true
+  },
+  {
+    "file": "sphynx-rose",
+    "frames": 6,
+    "source": "atlas-25.webp",
+    "catPixels": 22147,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "bengal-books",
+    "frames": 6,
+    "source": "atlas-25.webp",
+    "catPixels": 31506,
+    "front": false,
+    "floor": true
+  },
+  {
+    "file": "ragdoll-spring",
+    "frames": 6,
+    "source": "atlas-27.webp",
+    "catPixels": 23711,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "bobtail-festival",
+    "frames": 6,
+    "source": "atlas-27.webp",
+    "catPixels": 28778,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "bengal",
+    "frames": 6,
+    "source": "atlas-22.webp",
+    "catPixels": 28394,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "persian-stretch",
+    "frames": 6,
+    "source": "atlas-22.webp",
+    "catPixels": 35382,
+    "front": false,
+    "floor": true
+  },
+  {
+    "file": "british-boots",
+    "frames": 6,
+    "source": "atlas-24.webp",
+    "catPixels": 37301,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "scottish-yawn",
+    "frames": 6,
+    "source": "atlas-24.webp",
+    "catPixels": 28972,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "bombay-yarn",
+    "frames": 6,
+    "source": "atlas-26.webp",
+    "catPixels": 23971,
+    "front": false,
+    "floor": true
+  },
+  {
+    "file": "norwegian-moon",
+    "frames": 6,
+    "source": "atlas-26.webp",
+    "catPixels": 25448,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "bombay-magic",
+    "frames": 6,
+    "source": "atlas-28.webp",
+    "catPixels": 28773,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "persian-snow",
+    "frames": 6,
+    "source": "atlas-28.webp",
+    "catPixels": 31723,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "abyssinian-pot",
+    "frames": 6,
+    "source": "atlas-29.webp",
+    "catPixels": 23497,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "exotic-donut",
+    "frames": 6,
+    "source": "atlas-29.webp",
+    "catPixels": 34753,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "munchkin-milk",
+    "frames": 6,
+    "source": "atlas-30.webp",
+    "catPixels": 36766,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "norwegian-chime",
+    "frames": 6,
+    "source": "atlas-30.webp",
+    "catPixels": 28159,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "tuxedo-bench",
+    "frames": 6,
+    "source": "atlas-31.webp",
+    "catPixels": 26987,
+    "front": true,
+    "floor": true
+  },
+  {
+    "file": "persian-circle",
+    "frames": 6,
+    "source": "atlas-31.webp",
+    "catPixels": 40776,
+    "front": true,
+    "floor": true
+  },
+  {
+    "file": "russian-wash",
+    "frames": 6,
+    "source": "atlas-32.webp",
+    "catPixels": 19757,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "munchkin-sleeve",
+    "frames": 6,
+    "source": "atlas-32.webp",
+    "catPixels": 40885,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "bengal-leap",
+    "frames": 6,
+    "source": "atlas-33.webp",
+    "catPixels": 23257,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "fold-alarm",
+    "frames": 6,
+    "source": "atlas-33.webp",
+    "catPixels": 29343,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "ragdoll-knead",
+    "frames": 6,
+    "source": "atlas-34.webp",
+    "catPixels": 33956,
+    "front": true,
+    "floor": true
+  },
+  {
+    "file": "bobtail-noses",
+    "frames": 6,
+    "source": "atlas-34.webp",
+    "catPixels": 32260,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "norwegian-leaf",
+    "frames": 6,
+    "source": "atlas-35.webp",
+    "catPixels": 27474,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "bombay-feather",
+    "frames": 6,
+    "source": "atlas-35.webp",
+    "catPixels": 29817,
+    "front": false,
+    "floor": true
+  },
+  {
+    "file": "calico-rain",
+    "frames": 6,
+    "source": "atlas-36.webp",
+    "catPixels": 27681,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "siamese-fan",
+    "frames": 6,
+    "source": "atlas-36.webp",
+    "catPixels": 23457,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "exotic-mitten",
+    "frames": 6,
+    "source": "atlas-37.webp",
+    "catPixels": 36462,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "abyssinian-maple",
+    "frames": 6,
+    "source": "atlas-37.webp",
+    "catPixels": 24953,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "british-goldfish",
+    "frames": 6,
+    "source": "atlas-38.webp",
+    "catPixels": 38102,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "angora-sunrug",
+    "frames": 6,
+    "source": "atlas-38.webp",
+    "catPixels": 30008,
+    "front": true,
+    "floor": true
+  },
+  {
+    "file": "maine-rainwindow",
+    "frames": 6,
+    "source": "atlas-39.webp",
+    "catPixels": 21861,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "oriental-piano",
+    "frames": 6,
+    "source": "atlas-39.webp",
+    "catPixels": 20942,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "american-suitcase",
+    "frames": 6,
+    "source": "atlas-41.webp",
+    "catPixels": 33898,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "siamese-sailboat",
+    "frames": 6,
+    "source": "atlas-41.webp",
+    "catPixels": 22620,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "norwegian-airship",
+    "frames": 6,
+    "source": "atlas-42.webp",
+    "catPixels": 33174,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "calico-greenhouse",
+    "frames": 6,
+    "source": "atlas-42.webp",
+    "catPixels": 29727,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "russian-camp",
+    "frames": 6,
+    "source": "atlas-43.webp",
+    "catPixels": 28502,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "bengal-stargaze",
+    "frames": 6,
+    "source": "atlas-43.webp",
+    "catPixels": 19116,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "persian-hammock",
+    "frames": 6,
+    "source": "atlas-40.webp",
+    "catPixels": 37229,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "tuxedo-lighthouse",
+    "frames": 6,
+    "source": "atlas-40.webp",
+    "catPixels": 20696,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "fold-snowcabin",
+    "frames": 6,
+    "source": "atlas-44.webp",
+    "catPixels": 40307,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "sphynx-bicycle",
+    "frames": 6,
+    "source": "atlas-44.webp",
+    "catPixels": 20252,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "fold-dough",
+    "frames": 6,
+    "source": "atlas-45.webp",
+    "catPixels": 36035,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "tuxedo-jam",
+    "frames": 6,
+    "source": "atlas-45.webp",
+    "catPixels": 28939,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "abyssinian-honey",
+    "frames": 6,
+    "source": "atlas-46.webp",
+    "catPixels": 23307,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "persian-creampuff",
+    "frames": 6,
+    "source": "atlas-46.webp",
+    "catPixels": 39629,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "bobtail-citrus",
+    "frames": 6,
+    "source": "atlas-47.webp",
+    "catPixels": 33140,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "ragdoll-breadbag",
+    "frames": 6,
+    "source": "atlas-47.webp",
+    "catPixels": 32130,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "british-sweetscale",
+    "frames": 6,
+    "source": "atlas-48.webp",
+    "catPixels": 39920,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "munchkin-cocoa",
+    "frames": 6,
+    "source": "atlas-48.webp",
+    "catPixels": 32977,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "angora-chocolate",
+    "frames": 6,
+    "source": "atlas-49.webp",
+    "catPixels": 26984,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "calico-tailnest",
+    "frames": 6,
+    "source": "atlas-49.webp",
+    "catPixels": 26056,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "norwegian-kittenclimb",
+    "frames": 6,
+    "source": "atlas-50.webp",
+    "catPixels": 34254,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "american-leafsiblings",
+    "frames": 6,
+    "source": "atlas-50.webp",
+    "catPixels": 27068,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "siamese-windowfamily",
+    "frames": 6,
+    "source": "atlas-51.webp",
+    "catPixels": 25357,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "bombay-grooming",
+    "frames": 6,
+    "source": "atlas-51.webp",
+    "catPixels": 28752,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "persian-cuddle",
+    "frames": 6,
+    "source": "atlas-52.webp",
+    "catPixels": 34951,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "fold-siblings",
+    "frames": 6,
+    "source": "atlas-52.webp",
+    "catPixels": 34758,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "maine-pawtouch",
+    "frames": 6,
+    "source": "atlas-53.webp",
+    "catPixels": 25403,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "bobtail-follow",
+    "frames": 6,
+    "source": "atlas-53.webp",
+    "catPixels": 27370,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "tuxedo-tunnel",
+    "frames": 6,
+    "source": "atlas-54.webp",
+    "catPixels": 30855,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "russian-angora-scarf",
+    "frames": 6,
+    "source": "atlas-54.webp",
+    "catPixels": 32356,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "ocicat-siamese-ribbon",
+    "frames": 6,
+    "source": "atlas-55.webp",
+    "catPixels": 30153,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "munchkin-oriental-back",
+    "frames": 6,
+    "source": "atlas-55.webp",
+    "catPixels": 27344,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "patch-bombay-tail",
+    "frames": 6,
+    "source": "atlas-56.webp",
+    "catPixels": 29784,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "sphynx-listening",
+    "frames": 6,
+    "source": "atlas-56.webp",
+    "catPixels": 27980,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "calico-tabby-water",
+    "frames": 6,
+    "source": "atlas-57.webp",
+    "catPixels": 28453,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "persian-norwegian-boxes",
+    "frames": 6,
+    "source": "atlas-57.webp",
+    "catPixels": 30089,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "british-abyssinian-bench",
+    "frames": 6,
+    "source": "atlas-58.webp",
+    "catPixels": 31305,
+    "front": false,
+    "floor": true
+  },
+  {
+    "file": "persian-kotatsu",
+    "frames": 6,
+    "source": "atlas-58.webp",
+    "catPixels": 27380,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "calico-daruma",
+    "frames": 6,
+    "source": "atlas-59.webp",
+    "catPixels": 28865,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "abyssinian-origami",
+    "frames": 6,
+    "source": "atlas-59.webp",
+    "catPixels": 29192,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "bombay-furoshiki",
+    "frames": 6,
+    "source": "atlas-61.webp",
+    "catPixels": 27828,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "ragdoll-writingbox",
+    "frames": 6,
+    "source": "atlas-61.webp",
+    "catPixels": 31946,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "cornish-waves",
+    "frames": 6,
+    "source": "atlas-63.webp",
+    "catPixels": 21585,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "devon-planter",
+    "frames": 6,
+    "source": "atlas-63.webp",
+    "catPixels": 31471,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "birman-letterbox",
+    "frames": 6,
+    "source": "atlas-72.webp",
+    "catPixels": 30178,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "chartreux-ginkgo",
+    "frames": 6,
+    "source": "atlas-72.webp",
+    "catPixels": 24915,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "burmese-plum",
+    "frames": 6,
+    "source": "atlas-73.webp",
+    "catPixels": 31270,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "balinese-bell",
+    "frames": 6,
+    "source": "atlas-73.webp",
+    "catPixels": 25737,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "fold-sakuramochi",
+    "frames": 6,
+    "source": "atlas-60.webp",
+    "catPixels": 33401,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "american-koinobori",
+    "frames": 6,
+    "source": "atlas-60.webp",
+    "catPixels": 26941,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "maine-snowrabbit",
+    "frames": 6,
+    "source": "atlas-62.webp",
+    "catPixels": 30498,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "calico-mizuhiki",
+    "frames": 6,
+    "source": "atlas-62.webp",
+    "catPixels": 27900,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "american-curl-trunk",
+    "frames": 6,
+    "source": "atlas-64.webp",
+    "catPixels": 29866,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "selkirk-cloud",
+    "frames": 6,
+    "source": "atlas-64.webp",
+    "catPixels": 36226,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "manx-spool",
+    "frames": 6,
+    "source": "atlas-65.webp",
+    "catPixels": 25715,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "ocicat-watering",
+    "frames": 6,
+    "source": "atlas-65.webp",
+    "catPixels": 30037,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "van-book",
+    "frames": 6,
+    "source": "atlas-66.webp",
+    "catPixels": 31014,
+    "front": false,
+    "floor": true
+  },
+  {
+    "file": "lykoi-basket",
+    "frames": 6,
+    "source": "atlas-66.webp",
+    "catPixels": 20276,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "burmese-bowl",
+    "frames": 6,
+    "source": "atlas-67.webp",
+    "catPixels": 26730,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "norwegian-diagonal",
+    "frames": 6,
+    "source": "atlas-67.webp",
+    "catPixels": 29468,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "munchkin-bigleaf",
+    "frames": 6,
+    "source": "atlas-68.webp",
+    "catPixels": 32536,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "siamese-lowstalk",
+    "frames": 6,
+    "source": "atlas-68.webp",
+    "catPixels": 30771,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "british-rearloaf",
+    "frames": 6,
+    "source": "atlas-69.webp",
+    "catPixels": 30874,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "persian-portrait",
+    "frames": 6,
+    "source": "atlas-69.webp",
+    "catPixels": 35749,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "sphynx-lookback",
+    "frames": 6,
+    "source": "atlas-70.webp",
+    "catPixels": 19664,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "kitten-trio",
+    "frames": 6,
+    "source": "atlas-70.webp",
+    "catPixels": 23443,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "abyssinian-tallstretch",
+    "frames": 6,
+    "source": "atlas-71.webp",
+    "catPixels": 17739,
+    "front": true,
+    "floor": true
+  },
+  {
+    "file": "tuxedo-mentor",
+    "frames": 6,
+    "source": "atlas-71.webp",
+    "catPixels": 27582,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "himalayan-cushion",
+    "frames": 6,
+    "source": "atlas-74.webp",
+    "catPixels": 34933,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "ragamuffin-sewing",
+    "frames": 6,
+    "source": "atlas-74.webp",
+    "catPixels": 33567,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "singapura-stool",
+    "frames": 6,
+    "source": "atlas-75.webp",
+    "catPixels": 21987,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "somali-birdhouse",
+    "frames": 6,
+    "source": "atlas-75.webp",
+    "catPixels": 24395,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "angora-musicbox",
+    "frames": 6,
+    "source": "atlas-76.webp",
+    "catPixels": 31645,
+    "front": true,
+    "floor": false
+  }
+]

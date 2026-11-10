@@ -64,4 +64,5 @@ async function main(){
  html=html.replace(/\/\* AUDIO_DATA_START \*\/[\s\S]*?\/\* AUDIO_DATA_END \*\//,()=> '/* AUDIO_DATA_START */\nvar CAT_AUDIO='+JSON.stringify(sound)+';\n/* AUDIO_DATA_END */');
  fs.writeFileSync(htmlPath,html);console.log('Embedded',files.length,'paired works, backgrounds and one voice:',Buffer.byteLength(html),'bytes');
 }
-main().catch(e=>{console.error(e);process.exitCode=1});
+if(process.argv[2]==='--embed')require('./embed-game.cjs');
+else main().catch(e=>{console.error(e);process.exitCode=1});
