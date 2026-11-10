@@ -91,6 +91,17 @@ async function main(){
  await page.locator('#oGrid .cell').first().click();
  await page.click('#vClose');await page.click('#bRetry');
  s=await st(page);assert.equal(s.view,-1);assert.equal(s.shots,0);assert(s.running);
+ // 複数の猫がいる絵: 2匹とも動き、頭のまわり以外は動かない。
+ const multi=await page.evaluate(()=>{
+  const p=window.__pz,i=p.W.findIndex(w=>w.motionTargets&&w.motionTargets.length>1),v={mi:i,sp:0,flip:0},s=256;
+  const a=p.frame(v,s,.001).getContext('2d').getImageData(0,0,s,s).data,b=p.frame(v,s,.9).getContext('2d').getImageData(0,0,s,s).data;
+  const zones=p.W[i].motionTargets.map(m=>({hx:(.12+.76*m.x)*s,hy:(.12+.76*m.y)*s,rx:m.rx*.76*s,ry:m.ry*.76*s})),moved=zones.map(()=>0);let outside=0;
+  for(let k=0;k<a.length;k+=4){let diff=false;for(let j=0;j<3;j++)if(Math.abs(a[k+j]-b[k+j])>3)diff=true;if(!diff)continue;
+   const x=k/4%s,y=Math.floor(k/4/s);let hit=false;
+   zones.forEach((z,n)=>{if(x>=z.hx-z.rx-10&&x<=z.hx+z.rx+10&&y>=z.hy-z.ry-10&&y<=z.hy+z.ry+10){moved[n]++;hit=true}});if(!hit)outside++} // 10px=分割1マスぶんの余裕
+  return {i,moved,outside,count:p.W.filter(w=>w.motionTargets&&w.motionTargets.length>1).length};
+ });
+ assert(multi.i>=0&&multi.count>=20);assert(multi.moved.every(n=>n>20),'every cat moves '+JSON.stringify(multi));assert.equal(multi.outside,0,'art outside the cats stays still');
  await page.close();
 
  // 小さい画面でも拡大表示が収まる。
@@ -119,6 +130,6 @@ async function main(){
 
  assert.deepEqual(errors,[]);
  await browser.close();
- console.log('PASS: reveal skip by paper/print button and auto-advance, low-time warning, result snapshots, viewer (motion, voice, stepping, small screen), GRAVITY entry loader without iframe.');
+ console.log('PASS: reveal skip by paper/print button and auto-advance, low-time warning, result snapshots, viewer (motion, voice, stepping, small screen), multi-cat motion, GRAVITY entry loader without iframe.');
 }
 main().catch(e=>{console.error(e);process.exit(1)});
