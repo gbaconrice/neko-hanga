@@ -60,6 +60,7 @@ async function main(){
  await idle();
  s=await st();assert.equal(s.lastCarry,0);assert(!(await page.locator('#paper').evaluate(e=>e.classList.contains('gone'))),'the next sheet is visible');await page.waitForFunction(()=>getComputedStyle(document.querySelector('#paper')).opacity==='1');
  // 結果画面には音ボタンがないので、BGMは止まる。
+ await page.evaluate(()=>window.__pz.setLives(1)); // ラストチャンスを使用済みにして終える(ラストチャンスは tests/hook.cjs)
  await page.click('#bPrint');await page.waitForFunction(()=>!window.__pz.state().running);
  assert(!(await st()).music,'the result screen is quiet');
  await page.click('#bHome');assert(!(await st()).music,'the title is quiet');

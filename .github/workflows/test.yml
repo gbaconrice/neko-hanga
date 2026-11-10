@@ -25,3 +25,4 @@ jobs:
       - run: node tests/finish.cjs
       - run: node tests/polish.cjs
       - run: node tests/fun.cjs
+      - run: node tests/hook.cjs
