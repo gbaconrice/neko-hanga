@@ -35,9 +35,12 @@ async function main(){
  await page.clock.runFor(400);
  assert.equal((await st()).roll,1);assert.equal(await page.locator('#paper .roller').count(),0,'the roller leaves');
  assert((await pick(Math.round(px*.96)))>30,'the whole sheet is finished');
+ // 回帰: ローラーが通り終わったら、合わせ中の版(3枚ぶんの大きなキャンバス)を手放す。
+ assert.equal((await st()).prePlates,false,'preview plates are released after the roller passes');
  // 4. 早く刷ると、残り時間の一部が次の紙へ持ち越される。
  const carried=(await st()).carry;assert(carried>0&&carried<=6,'some time is carried '+carried);
  await idle();
+assert.equal((await st()).prePlates,false,'and stay released on the next sheet');
  s=await st();assert.equal(s.lastCarry,carried);assert(Math.abs(s.tMax-(s.baseTime+carried))<1e-9);assert(s.tLeft>s.baseTime,'the next sheet starts with extra time');
  assert.equal(await page.locator('#carry').textContent(),'+'+carried.toFixed(1)+'秒');
  // 音を切るとBGMが止まり、戻すとまた鳴る。
@@ -58,11 +61,26 @@ async function main(){
  await page.waitForFunction(()=>window.__pz.state().lives===1);
  assert.equal(await page.locator('#stage .yare').count(),1);
  await idle();
- s=await st();assert.equal(s.lastCarry,0);assert(!(await page.locator('#paper').evaluate(e=>e.classList.contains('gone'))),'the next sheet is visible');await page.waitForFunction(()=>getComputedStyle(document.querySelector('#paper')).opacity==='1');
+ s=await st();assert.equal(s.lastCarry,0);
+ // 回帰: 持ち越しがない紙では、前の「+N秒」を読み上げ領域に残さない。
+ assert.equal(await page.locator('#carry').textContent(),'','no stale carried-time text');assert.equal(await page.locator('#carry.show').count(),0);
+assert(!(await page.locator('#paper').evaluate(e=>e.classList.contains('gone'))),'the next sheet is visible');await page.waitForFunction(()=>getComputedStyle(document.querySelector('#paper')).opacity==='1');
  // 結果画面には音ボタンがないので、BGMは止まる。
  await page.evaluate(()=>window.__pz.setLives(1)); // ラストチャンスを使用済みにして終える(ラストチャンスは tests/hook.cjs)
  await page.click('#bPrint');await page.waitForFunction(()=>!window.__pz.state().running);
  assert(!(await st()).music,'the result screen is quiet');
+ // 回帰: 狭い画面で★特色の札が出ても、札は1行のまま折り返して並び、画面からはみ出さない。
+ for(const w of [320,360,390]){
+  await page.setViewportSize({width:w,height:w===390?844:568});
+  const stats=await page.evaluate(()=>{document.querySelector('#oPrints').textContent='12枚';document.querySelector('#oStreak').textContent='12回';document.querySelector('#oOrders').textContent='3件';
+   document.querySelector('#oSp').textContent='2枚';document.querySelector('#oSpItem').hidden=false;window.dispatchEvent(new Event('resize'));
+   const r=e=>e.getBoundingClientRect(),items=[...document.querySelectorAll('.stats li')].filter(e=>!e.hidden).map(e=>r(e));
+   return {vw:innerWidth,vh:innerHeight,tall:Math.max(...items.map(q=>q.height)),left:Math.min(...items.map(q=>q.left)),right:Math.max(...items.map(q=>q.right)),row:r(document.querySelector('#over .row')).bottom,book:r(document.querySelector('#bookPage')).width}});
+  assert(stats.tall<=30,'each stat pill stays on one line at '+w+'px '+JSON.stringify(stats));
+  assert(stats.left>=0&&stats.right<=stats.vw&&stats.row<=stats.vh,'the stats fit the screen at '+w+'px '+JSON.stringify(stats));
+  assert(stats.book>=100,'the storybook keeps a usable size at '+w+'px '+JSON.stringify(stats));
+ }
+ await page.setViewportSize({width:390,height:844});
  await page.click('#bHome');assert(!(await st()).music,'the title is quiet');
  // 小さい画面でも、持ち越しの表示が上部の余白にかからない。
  await page.setViewportSize({width:320,height:568});
@@ -71,6 +89,6 @@ async function main(){
  assert(ct.top>=74&&ct.right<=ct.w,'the carried-time label fits '+JSON.stringify(ct));
  assert.deepEqual(errors,[]);
  await browser.close();
- console.log('PASS: roller wipe left to right, crumpled misprints and timeouts, carried time, music box (game only, mute/unmute, quiet result and title), small screen fit.');
+ console.log('PASS: roller wipe left to right, crumpled misprints and timeouts, carried time, music box (game only, mute/unmute, quiet result and title), small screen fit, released preview plates, cleared carry text, wrapping result stats.');
 }
 main().catch(e=>{console.error(e);process.exit(1)});
