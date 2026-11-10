@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>ねこ版画</title>
+</head>
+<body style="margin:0;background:#243c3a;color:#f5efde;font-family:sans-serif">
+<p id="boot" style="margin:0;padding:40vh 16px 0;text-align:center;font-size:14px">よみこみ中…</p>
+<script>
+/* GRAVITYへ渡す小さな入口。ゲーム本体(index.html)をGitHub Pagesから読み込み、
+   iframeを使わずこの画面にそのまま展開する(window.parent はGRAVITYのまま)。 */
+(function(){
+  var U='https://gbaconrice.github.io/neko-hanga/index.html';
+  function fail(){document.getElementById('boot').textContent='読み込めませんでした。通信を確認して開き直してください。'}
+  fetch(U,{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(t){
+    var d=new DOMParser().parseFromString(t,'text/html'),scripts=[].slice.call(d.querySelectorAll('script'));
+    scripts.forEach(function(s){s.parentNode.removeChild(s)});
+    [].slice.call(d.head.querySelectorAll('style')).forEach(function(s){document.head.appendChild(document.importNode(s,true))});
+    document.body.removeAttribute('style');document.body.innerHTML=d.body.innerHTML;
+    (function run(i){
+      if(i>=scripts.length)return;
+      var s=document.createElement('script'),src=scripts[i].getAttribute('src');
+      if(src){s.onload=s.onerror=function(){run(i+1)};s.src=src;document.head.appendChild(s)}
+      else{s.textContent=scripts[i].textContent;document.body.appendChild(s);run(i+1)}
+    })(0);
+  }).catch(fail);
+})();
+</script>
+</body>
+</html>

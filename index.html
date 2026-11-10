@@ -104,6 +104,19 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
 .row{display:flex;gap:10px;flex:none}
 .row>*{flex:1}
 #loadStatus{font-size:12px;color:var(--sub);min-height:16px}
+.bar.low i{animation:barLow .5s steps(2,start) infinite}
+@keyframes barLow{50%{opacity:.35}}
+.cell{cursor:pointer}
+#view{position:absolute;top:0;bottom:0;left:0;right:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:calc(var(--top) + 12px) 16px 16px;background:rgba(24,40,38,.94)}
+#view.on{display:flex}
+#vPaper{background:var(--paper);box-shadow:0 8px 22px rgba(0,0,0,.5)}
+#vPaper canvas{display:block;width:100%;height:100%}
+#vName{font-size:18px;font-weight:800;letter-spacing:.08em;text-align:center}
+#vBreed{font-size:12px;color:var(--sub);min-height:16px;margin-top:-8px}
+#view .row{width:100%;max-width:320px}
+#view .row .sub{font-size:20px}
+#view #vClose{flex:2;font-size:15px}
 .big:disabled{opacity:.5;box-shadow:none;transform:none}
 #toast{top:auto;bottom:0;font-size:13px;padding:6px 12px;line-height:1.3;max-width:95%;white-space:pre-line;transform:translateX(-50%);border-width:1px}
 #toast.show{animation:printNotice 1.5s ease-out}
@@ -155,6 +168,13 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
       <button class="sub" id="bHome">タイトル</button>
       <button class="big" id="bRetry">もう一度</button>
     </div>
+  </div>
+
+  <div id="view">
+    <div id="vPaper"><canvas id="vcv"></canvas></div>
+    <div id="vName"></div>
+    <div id="vBreed"></div>
+    <div class="row"><button class="sub" id="vPrev" aria-label="前の作品">‹</button><button class="sub" id="vClose">とじる</button><button class="sub" id="vNext" aria-label="次の作品">›</button></div>
   </div>
 
 
@@ -433,7 +453,8 @@ function sNg(){beep(170,.28,'sawtooth',.06,85)}
 
 /* ================= ゲーム本体 ================= */
 var cv=$('cv'),ctx=cv.getContext('2d'),paper=$('paper');
-var plates=[],cur=null,prints=0,lives=LIVES,works=[],bag=[],tLeft=0,tMax=1,running=false,busy=false,dials=[],sent=false,streak=0,told={},score=0,maxStreak=0,spGot=0,order=null,ordDone=0,helps=0,hintOn=false,revealing=false,revealStarted=0,lastCatFrame=0;
+var plates=[],cur=null,prints=0,lives=LIVES,works=[],bag=[],tLeft=0,tMax=1,running=false,busy=false,dials=[],sent=false,streak=0,told={},score=0,maxStreak=0,spGot=0,order=null,ordDone=0,helps=0,hintOn=false,revealing=false,revealStarted=0,lastCatFrame=0,skipReveal=null,lowSec=0,view=null;
+var REVEAL_MS=2050,SKIP_AFTER_MS=600,LOW_TIME=5; // 完成図の表示時間 / タップで送れるまでの時間 / 残り何秒から警告するか
 
 function fit(){
   var r=$('stage').getBoundingClientRect();
@@ -563,7 +584,7 @@ function newSheet(){
   var sol=ax.map(function(){return (1+rnd(c.range))*(Math.random()<.5?1:-1)});
   cur={va:va,cols:cols(va),ax:ax,M:M,sol:sol,v:ax.map(function(){return 0}),u:c.u,tier:c.tier};
   hintFor(c);buildKnobs();fit();plates=makePlates(va,cv.width,true);
-  tMax=tLeft=c.time;$('tbar').style.transform='scaleX(1)';draw();
+  tMax=tLeft=c.time;lowSec=0;$('tbar').parentNode.classList.remove('low');$('tbar').style.transform='scaleX(1)';draw();
 }
 function toast(msg,cls){
   var t=$('toast');t.textContent=msg;t.className=cls;void t.offsetWidth;t.className=cls+' show';
@@ -591,16 +612,28 @@ function scoreTo(n){
   },30);
 }
 function nextSheet(){
-  busy=true;
-  function slide(){anim('pout',340,function(){
-    if(!running)return;
-    newSheet();anim('pin',240);busy=false;
-  })}
-  if(revealing)anim('pstamp',180,function(){setTimeout(slide,2050)});
+  busy=true;var gone=false,timer=null;
+  function slide(){
+    if(gone)return;gone=true;skipReveal=null;clearTimeout(timer);
+    anim('pout',340,function(){
+      if(!running)return;
+      newSheet();anim('pin',240);busy=false;
+    });
+  }
+  if(revealing)anim('pstamp',180,function(){if(!running)return;skipReveal=slide;timer=setTimeout(slide,REVEAL_MS)});
   else slide();
+}
+// 完成図は、少し見せたあとならタップで次へ送れる
+function trySkip(){if(running&&skipReveal&&performance.now()-revealStarted>=SKIP_AFTER_MS){stopMeows();skipReveal()}}
+// 刷り上がった瞬間の絵を小さく控えておき、結果画面で描き直さない
+function snapshot(){
+  var c=document.createElement('canvas');c.width=c.height=168;
+  try{c.getContext('2d').drawImage(cv,0,0,168,168)}catch(e){return null}
+  return c;
 }
 
 function onPrint(){
+  if(running&&busy&&skipReveal){trySkip();return}
   if(!running||busy||!artReady)return;au();
   var ok=offs().every(function(o){return o===0});
   if(ok){
@@ -612,7 +645,7 @@ function onPrint(){
     score+=pts;
     if(streak%HEAL_EVERY===0&&lives<LIVES){lives++;heal=true}
     hud();
-    revealing=true;revealStarted=performance.now();plates=makePlates(va,cv.width,false);draw();
+    revealing=true;revealStarted=performance.now();plates=makePlates(va,cv.width,false);draw();va.shot=snapshot();
 
     burst(cur.cols);sPress();meow();
     toast((va.sp?'★ '+SP[va.sp-1].n+'\n':'')+name+'\n+'+pts+(od?'\n注文達成！おたすけ+1':'')+(heal?'\nライフ回復！':''),va.sp?'sp':'ok');
@@ -640,16 +673,30 @@ function gameOver(){
   $('oNum').textContent=score;$('oRank').textContent='称号：'+rank(prints);
   var g=$('oGrid');g.innerHTML='';
   if(!works.length)g.innerHTML='<div class="empty">まだ1枚も刷れていません。<br>トンボ（＋印）をよく見て合わせよう</div>';
-  works.forEach(function(w){var c=document.createElement('div');c.className='cell';var t=document.createElement('div');t.className='th';t.appendChild(thumb(w,84));c.appendChild(t);var s=document.createElement('span');s.textContent=(w.sp?'★':'')+W[w.mi].n;c.appendChild(s);g.appendChild(c)});
+  works.forEach(function(w,i){var c=document.createElement('div');c.className='cell';c.addEventListener('click',function(){openView(i)});var t=document.createElement('div');t.className='th';t.appendChild(w.shot||thumb(w,84));c.appendChild(t);var s=document.createElement('span');s.textContent=(w.sp?'★':'')+W[w.mi].n;c.appendChild(s);g.appendChild(c)});
   show('over');
 }
+// 結果画面で作品をタップすると、大きく見られる(猫が動いて鳴く)
+function openView(i){
+  var w=works[i];if(!w||!artReady)return;
+  var s=Math.max(160,Math.min(320,$('app').clientWidth-40,$('app').clientHeight-topInset()-190)),px=Math.round(s*Math.min(2,window.devicePixelRatio||1)),c=$('vcv');
+  $('vPaper').style.width=$('vPaper').style.height=s+'px';c.width=c.height=px;
+  view={i:i,va:w,plates:makePlates(w,px,false),t0:performance.now()};
+  $('vName').textContent=(w.sp?'★ ':'')+W[w.mi].n;
+  $('vBreed').textContent=(w.sp?SP[w.sp-1].n+' ・ ':'')+(W[w.mi].breed||'');
+  $('view').classList.add('on');drawView();meow();
+}
+function drawView(){if(view)compose($('vcv').getContext('2d'),$('vcv').width,view.plates,null,view.va,false,(performance.now()-view.t0)/1000)}
+function closeView(){if(!view)return;view=null;$('view').classList.remove('on');stopMeows()}
+function stepView(d){if(view&&works.length)openView((view.i+d+works.length)%works.length)}
 function start(){
   if(!artReady){loadArt();return}
+  closeView();
   au();loadMeows();prints=0;lives=LIVES;streak=0;score=0;maxStreak=0;spGot=0;order=null;ordDone=0;helps=HELP_START;works=[];bag=[];told={};sent=false;running=true;busy=false;revealing=false;cur=null;
   show('game');hud();newSheet();anim('pin',240);
 }
 function home(){
-  running=false;show('title');
+  running=false;closeView();show('title');
   if(!artReady)return;
   var h=$('hero');h.innerHTML='';h.appendChild(thumb(plain(0),160));
 }
@@ -661,7 +708,12 @@ function loop(ts){
   if(running&&!busy&&cur){
     tLeft-=dt;$('tbar').style.transform='scaleX('+Math.max(0,tLeft/tMax)+')';
     if(tLeft<=0)onTimeout();
+    else if(tLeft<=LOW_TIME){
+      var sec=Math.ceil(tLeft);
+      if(sec!==lowSec){lowSec=sec;$('tbar').parentNode.classList.add('low');beep(880,.05,'sine',.05)}
+    }
   }
+  if(view&&!reducedMotion&&ts-lastCatFrame>=33){lastCatFrame=ts;drawView()}
   if(running&&revealing&&!reducedMotion&&ts-lastCatFrame>=33){lastCatFrame=ts;draw()}
   requestAnimationFrame(loop);
 }
@@ -677,6 +729,12 @@ $('bRetry').addEventListener('click',start);
 $('bHome').addEventListener('click',home);
 $('bPrint').addEventListener('click',onPrint);
 $('bHelp').addEventListener('click',useHelp);
+paper.addEventListener('pointerdown',trySkip);
+$('vClose').addEventListener('click',closeView);
+$('vPrev').addEventListener('click',function(){stepView(-1)});
+$('vNext').addEventListener('click',function(){stepView(1)});
+$('vPaper').addEventListener('click',function(){if(view)meow()});
+document.addEventListener('visibilitychange',function(){if(document.hidden)stopMeows()});
 $('mute').addEventListener('click',function(){
   if(!muted&&audioState==='blocked'){unlockSound();meow();this.textContent='音 ON';return}
   muted=!muted;this.textContent=muted?'音 OFF':'音 ON';this.classList.toggle('off',muted);if(muted)stopMeows();else{unlockSound();sTick()}
@@ -702,7 +760,7 @@ function loadUser(){
 document.documentElement.style.setProperty('--top',topInset()+'px');
 home();loadArt();loadUser();requestAnimationFrame(loop);
 // 動作確認用(?debug=1 のときだけ有効)
-try{if(new URLSearchParams(location.search).get('debug'))window.__pz={thumb:thumb,plain:plain,variant:variant,W:W,cur:function(){return cur},state:function(){return {reducedMotion:!!reducedMotion,prints:prints,lives:lives,running:running,busy:busy,streak:streak,meows:meowBuffer?1:0,audioState:audioState,audioPlayed:audioPlayed,activeVoices:activeMeows.length,audioContext:ac?ac.state:'unsupported',audioError:audioError,artReady:artReady,revealing:revealing,score:score,helps:helps,order:order,ordDone:ordDone}},setLives:function(n){lives=n},setPrints:function(n){prints=n}}}catch(e){}
+try{if(new URLSearchParams(location.search).get('debug'))window.__pz={thumb:thumb,plain:plain,variant:variant,W:W,cur:function(){return cur},state:function(){return {reducedMotion:!!reducedMotion,prints:prints,lives:lives,running:running,busy:busy,streak:streak,meows:meowBuffer?1:0,audioState:audioState,audioPlayed:audioPlayed,activeVoices:activeMeows.length,audioContext:ac?ac.state:'unsupported',audioError:audioError,artReady:artReady,revealing:revealing,score:score,helps:helps,order:order,ordDone:ordDone,canSkip:!!skipReveal,view:view?view.i:-1,shots:works.filter(function(w){return w.shot}).length}},setLives:function(n){lives=n},setPrints:function(n){prints=n}}}catch(e){}
 })();
 </script>
 </body>
