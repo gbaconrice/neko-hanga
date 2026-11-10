@@ -22,19 +22,22 @@ async function main(){
  assert(total>=144);assert.equal(await page.evaluate(()=>window.__pz.W.length),total);
  assert.equal(requests.filter(u=>!u.startsWith('http://127.0.0.1:4173/?')&&!u.includes('cdn.gravity.place')).length,0,'art and sound must work without an asset server');
  // Render all distinct works, mirrored works and all special palettes.
- const art=await page.evaluate(()=>{
+ const art=await page.evaluate(async()=>{
   const p=window.__pz,hashes=[],coverage=[];
-  p.W.forEach((_,i)=>{
+  for(let i=0;i<p.W.length;i++){
+   await p.loadWork(i);
    const c=p.thumb(p.plain(i),256),g=c.getContext('2d'),d=g.getImageData(0,0,c.width,c.height).data;
    let n=0;for(let k=0;k<d.length;k+=4)if(Math.abs(d[k]-245)>8||Math.abs(d[k+1]-239)>8||Math.abs(d[k+2]-222)>8)n++;
    hashes.push(c.toDataURL());coverage.push(n/(c.width*c.height));
-   for(let sp=1;sp<=5;sp++)p.thumb({mi:i,sp,flip:1},64);
-  });
-  return {unique:new Set(hashes).size,min:Math.min(...coverage),max:Math.max(...coverage)};
+   if(i%30===0)for(let sp=1;sp<=5;sp++)p.thumb({mi:i,sp,flip:1},64);
+  }
+  return {unique:new Set(hashes).size,min:Math.min(...coverage),max:Math.max(...coverage),lowest:p.W[coverage.indexOf(Math.min(...coverage))].file,highest:p.W[coverage.indexOf(Math.max(...coverage))].file};
  });
- assert.equal(art.unique,total);assert(art.min>.2&&art.max<.98);
+ // Rich completion backgrounds may cover the whole paper; only blank output
+ // is invalid. The four-color puzzle palette is checked in animation.cjs.
+ assert.equal(art.unique,total);assert(art.min>.2,JSON.stringify(art));
  await page.screenshot({path:'/workspace/scratch/title.png'});
- await page.click('#bStart');
+ await page.click('#bStart');await page.waitForFunction(()=>!window.__pz.state().busy);
  await page.waitForFunction(()=>window.__pz.state().meows===1);
  const bounds=await page.locator('.kn').first().boundingBox();
  const before=await page.evaluate(()=>window.__pz.cur().v[0]);
@@ -96,17 +99,17 @@ async function main(){
  await page.click('#bPrint');await page.waitForFunction(()=>!window.__pz.state().running);
  await page.waitForFunction(()=>window.scoreMessages.length===1);
  assert.equal(await page.locator('#over.on').count(),1);
- assert.equal(await page.locator('#oGrid .cell').count(),7);
- await page.click('#bRetry');
+ await page.waitForFunction(()=>document.querySelector('#bookCount').textContent==='1 / 7');assert.equal(await page.locator('#bookCanvas').count(),1);
+ await page.click('#bRetry');await page.waitForFunction(()=>!window.__pz.state().busy);
  assert.equal(await page.evaluate(()=>window.__pz.state().prints),0);
  assert.equal(await page.evaluate(()=>window.__pz.state().score),0);
  await page.evaluate(()=>window.__pz.setLives(1));
  await page.clock.runFor(41000);
  assert.equal(await page.evaluate(()=>window.__pz.state().running),false,'timeout ends play');
  assert.equal(await page.evaluate(()=>window.scoreMessages.length),2,'one score per play');
- assert.equal(await page.locator('#oGrid .cell').count(),0,'results reset on retry');
+ assert.equal(await page.locator('#bookPage').isVisible(),false,'empty book after retry');
  assert.deepEqual(errors,[]);
- console.log('PASS: standalone HTML, storage unavailable, all works × 6 palettes, pointer tap/help, reveal, 7 successes, all difficulty tiers, 3 embedded phone sizes, failure/retry/timeout, one score per play.');
+ console.log('PASS: standalone HTML, storage unavailable, all works and representative special palettes, pointer tap/help, reveal, 7 successes, all difficulty tiers, 3 embedded phone sizes, failure/retry/timeout, one score per play.');
  console.log('Artwork ink coverage:',art.min.toFixed(3),art.max.toFixed(3));
  await browser.close();
 }

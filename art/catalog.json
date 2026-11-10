@@ -2030,5 +2030,59 @@
         "ry": 0.15
       }
     ]
+  },
+  {
+    "n": "お便りを待つバーマン",
+    "file": "birman-letterbox",
+    "breed": "バーマン",
+    "pose": "白い手袋の前脚を郵便受けから出す"
+  },
+  {
+    "n": "いちょうとシャルトリュー",
+    "file": "chartreux-ginkgo",
+    "breed": "シャルトリュー",
+    "pose": "じょうろの隣に座り前脚を上げる"
+  },
+  {
+    "n": "梅の香りのうつわ",
+    "file": "burmese-plum",
+    "breed": "バーミーズ",
+    "pose": "梅の花の鉢で丸まる"
+  },
+  {
+    "n": "鈴にとどくかな",
+    "file": "balinese-bell",
+    "breed": "バリニーズ",
+    "pose": "座って片方の前脚を伸ばす"
+  },
+  {
+    "n": "福寿草のまくら",
+    "file": "himalayan-cushion",
+    "breed": "ヒマラヤン",
+    "pose": "座布団で眠ってからのびをする"
+  },
+  {
+    "n": "お裁縫はおやすみ",
+    "file": "ragamuffin-sewing",
+    "breed": "ラガマフィン",
+    "pose": "裁縫かごから前脚を出す"
+  },
+  {
+    "n": "小さな背のび",
+    "file": "singapura-stool",
+    "breed": "シンガプーラ",
+    "pose": "椅子に前脚を置いて伸びる"
+  },
+  {
+    "n": "ソマリの身じたく",
+    "file": "somali-birdhouse",
+    "breed": "ソマリ",
+    "pose": "前脚で顔を洗う"
+  },
+  {
+    "n": "牡丹とオルゴール",
+    "file": "angora-musicbox",
+    "breed": "ターキッシュアンゴラ",
+    "pose": "大きなしっぽの白猫がお座りする"
   }
 ]

@@ -4,13 +4,13 @@
 
 ## 素材
 
-`catalog.json` が45場面の一覧です。作品ごとに次の素材を使います。
+`catalog.json` が153場面の一覧です。作品ごとに次の素材を使います。
 
 - `名前.png`：512px、サーモン `#d78479`・ティール `#3b6863`・マスタード `#c4a052`・紙色 `#f5efde` の4値。
 - `finish/名前.webp`：完成時に加える384pxの背景。猫・人物を描かず、中央を明るく空け、周囲に場面に合う花や葉を描く。
-- `shapes/名前.png`：原画から生成する紙のシルエット。猫の白い体が背景に透けないようにする。
+- `animation/名前.webp`：6枚の猫のポーズと、各コマで同じ位置の小物を合成した透過スプライト。
 
-完成図は、背景・紙のシルエット・元の三色の絵の順に重ねます。四角い紙で中央を覆わず、同じ猫の周りに絵が加わる構成を維持してください。
+完成図は、背景に連続コマを重ねます。原画と同じ猫種・模様・場面を保ち、前脚やしっぽなどの動作を描き起こします。背景と小物は固定し、中央を紙で覆わないでください。
 
 ## アトラスを取り込む
 
@@ -21,6 +21,7 @@
 ```
 node scripts/build-art.cjs --import /path/to/core-atlas.png 36
 node scripts/build-art.cjs --background /path/to/background-atlas.png 36
+node scripts/build-animation.cjs /path/to/animation-jobs
 node scripts/build-art.cjs --embed
 ```
 
@@ -30,6 +31,6 @@ node scripts/build-art.cjs --embed
 
 ## 猫の動き
 
-catalogの `motion` は原画内の頭の中心 `x,y` と、変形する範囲 `rx,ry` です。いずれも0〜1の比率。描いた猫の位置に合わせて調整してください。周囲の背景は動かしません。
+猫のポーズは6枚すべて描き起こします。頭のメッシュ変形や画像を揺らす処理は使いません。背景側の小物・手前の小物・猫の各コマを分けて用意します。詳しくは [animation/README.md](animation/README.md) を参照してください。以前の `motion` / `motionTargets` は使用しません。
 
-未実装の追加素材は `inbox/` に分けて置きます。本体への取り込みはClaudeが判断します。
+`inbox/` の99場面は本体へ取り込み済みです。新しい場面は原画・背景・連続コマの3点を揃えてから埋め込みます。
