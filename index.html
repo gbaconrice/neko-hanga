@@ -53,9 +53,10 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
 @keyframes pin{from{transform:translateY(-28px);opacity:0}}
 @keyframes pshake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
 #toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-6deg);padding:8px 18px;border-radius:8px;
-  font-size:22px;font-weight:900;letter-spacing:.1em;white-space:nowrap;pointer-events:none;opacity:0;border:3px solid currentColor;background:rgba(246,240,225,.92)}
+  font-size:20px;line-height:1.35;text-align:center;font-weight:900;letter-spacing:.08em;white-space:pre;pointer-events:none;opacity:0;border:3px solid currentColor;background:rgba(246,240,225,.92)}
 #toast.ok{color:#1f8a5a}
 #toast.ng{color:#d7263d}
+#toast.sp{color:#a06a00}
 #toast.show{animation:tst .8s ease-out}
 @keyframes tst{0%{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(1.5)}15%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}75%{opacity:1}100%{opacity:0}}
 .knobs{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 0;flex:none}
@@ -78,6 +79,20 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
 .head .num{font-size:56px;font-weight:900;line-height:1.1;font-variant-numeric:tabular-nums}
 .head .num small{font-size:18px;margin-left:4px}
 .head h2{margin:4px 0 0;font-size:20px;letter-spacing:.1em}
+.rank{font-size:15px;font-weight:800;color:#ffd23f;margin-top:2px;min-height:20px}
+#best{font-size:12px;color:#ffd23f;min-height:16px}
+#hint{height:20px;flex:none;text-align:center;font-size:12px;font-weight:700;color:#ffd23f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#stk{font-size:11px;font-weight:800;color:#ffd23f;margin-left:6px}
+.bd{position:absolute;right:2px;bottom:2px;font-size:9px;font-weight:800;line-height:1;padding:2px 3px;border-radius:3px;background:rgba(35,38,45,.85);color:#fff}
+.bd.st{right:auto;left:2px;bottom:auto;top:2px;color:#ffd23f}
+#det{position:absolute;top:0;bottom:0;left:0;right:0;display:none;align-items:center;justify-content:center;background:rgba(20,22,27,.88);padding:16px;z-index:5}
+#det.on{display:flex}
+.dcard{width:100%;max-width:320px;display:flex;flex-direction:column;align-items:center;gap:10px}
+#dImg{width:240px;height:240px;background:var(--paper);box-shadow:0 8px 22px rgba(0,0,0,.5)}
+#dImg canvas{display:block;width:100%;height:100%}
+.dcard h3{margin:4px 0 0;font-size:20px;letter-spacing:.1em}
+#dInfo{font-size:12px;line-height:1.7;color:#cfd3dc;text-align:center;min-height:40px}
+.dcard .row{width:100%}
 .grid{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;display:grid;
   grid-template-columns:repeat(4,1fr);gap:8px;align-content:start;padding:4px 2px 12px}
 .th{background:var(--paper);aspect-ratio:1/1;box-shadow:0 2px 6px rgba(0,0,0,.4);position:relative}
@@ -96,11 +111,13 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
     <div id="hero"></div>
     <h1>ぴったり印刷所</h1>
     <div id="who"></div>
+    <div id="best"></div>
     <ul class="how">
       <li>色つきのボタンを押して<b>版のズレ</b>を直す</li>
       <li>四すみの<b>トンボ（＋印）</b>が重なれば「刷る」</li>
       <li>ズレたまま刷る・時間切れでライフ −1</li>
-      <li>ボタンの左右を押すと1目盛り、長押しで連続</li>
+      <li><b>5枚連続</b>で成功するとライフが1つ回復</li>
+      <li>たまに出る<b>★特色刷り</b>を図鑑に集めよう</li>
     </ul>
     <button class="big" id="bStart">はじめる</button>
     <button class="sub" id="bGal">図鑑 <span id="galN"></span></button>
@@ -109,10 +126,11 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
   <div id="game" class="screen">
     <div class="hud">
       <div class="lives" id="lives"></div>
-      <div class="count"><b id="cnt">0</b>枚</div>
+      <div class="count"><b id="cnt">0</b>枚<span id="stk"></span></div>
       <button class="ib" id="mute">音 ON</button>
     </div>
     <div class="bar"><i id="tbar"></i></div>
+    <div id="hint"></div>
     <div class="stage" id="stage">
       <div class="paper" id="paper"><canvas id="cv"></canvas></div>
       <div id="toast"></div>
@@ -125,6 +143,7 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
     <div class="head">
       <div class="lbl">本日の刷り上がり</div>
       <div class="num"><span id="oNum">0</span><small>枚</small></div>
+      <div class="rank" id="oRank"></div>
     </div>
     <div class="grid" id="oGrid"></div>
     <div class="row">
@@ -139,6 +158,15 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
     <div class="row"><button class="sub" id="bBack">もどる</button></div>
   </div>
 
+  <div id="det">
+    <div class="dcard">
+      <div id="dImg"></div>
+      <h3 id="dName"></h3>
+      <div id="dInfo"></div>
+      <div class="row"><button class="sub" id="dClose">とじる</button><button class="sub" id="dNext">別の刷り</button></div>
+    </div>
+  </div>
+
 </div>
 <script>
 (function(){'use strict';
@@ -147,7 +175,9 @@ var LIVES=3;            // ライフ数
 var STEP=20;            // つまみ1目盛りの回転角(度)
 var VMAX=12;            // つまみの可動範囲(±目盛り)
 var SDK_TIMEOUT=4000;   // SDK応答の待機上限(ms)
-var STORE_KEY='pittari_zukan_v1';
+var STORE_KEY='pittari_zukan_v2',OLD_KEY='pittari_zukan_v1',BEST_KEY='pittari_best_v1';
+var HEAL_EVERY=5;       // 何枚連続成功でライフ回復するか
+var RARE_ONE_IN=7;      // 特色刷りが出る割合(1/N)
 // GRAVITY上部UIの回避余白(暫定値。実機で要確認)。URLに ?top=数値 で上書き可
 function topInset(){
   var q=null;try{q=new URLSearchParams(location.search).get('top')}catch(e){}
@@ -158,12 +188,16 @@ function topInset(){
 }
 // 難易度: n=これまでに刷れた枚数
 function cfg(n){
-  if(n<3) return {mov:1,rot:0,links:0,u:2.6,range:4,time:40};
-  if(n<7) return {mov:2,rot:0,links:0,u:2.2,range:4,time:45};
-  if(n<12)return {mov:2,rot:1,links:0,u:1.9,range:5,time:45};
-  if(n<18)return {mov:2,rot:2,links:1,u:1.6,range:5,time:42};
-  return {mov:2,rot:2,links:Math.min(4,2+((n-18)/6|0)),u:Math.max(1,1.5-(n-18)*.03),range:6,time:Math.max(24,40-(n-18)*.8)};
+  if(n<3) return {mov:1,rot:0,scl:0,links:0,u:2.6,range:4,time:40};
+  if(n<7) return {mov:2,rot:0,scl:0,links:0,u:2.2,range:4,time:45};
+  if(n<12)return {mov:2,rot:1,scl:0,links:0,u:1.9,range:5,time:45};
+  if(n<18)return {mov:2,rot:2,scl:0,links:1,u:1.6,range:5,time:42};
+  if(n<25)return {mov:2,rot:1,scl:1,links:2,u:1.5,range:5,time:42};
+  return {mov:2,rot:1,scl:1,links:Math.min(5,3+((n-25)/6|0)),u:Math.max(1,1.5-(n-25)*.03),range:6,time:Math.max(24,40-(n-25)*.8)};
 }
+// 称号(刷れた枚数)
+var RANKS=[[0,'見習い'],[3,'印刷工'],[7,'刷り師'],[12,'職人'],[18,'親方'],[25,'名人'],[35,'人間国宝']];
+function rank(n){var r=RANKS[0][1];RANKS.forEach(function(q){if(n>=q[0])r=q[1]});return r}
 
 /* ================= 絵柄データ =================
    100x100の座標。版は[薄い色, 中間色, 濃い色]の3枚。
@@ -209,7 +243,37 @@ var W=[
 {n:'蝶',p:[[C(33,40,16),C(67,40,16)],[C(37,63,11),C(63,63,11),C(33,40,6),C(67,40,6)],[E(50,50,3.5,19),S(1.5,'M50 32Q46 20 38 18M50 32Q54 20 62 18'),C(37,63,3),C(63,63,3)]]},
 {n:'灯台',p:[[P(52,30,94,16,94,44)],['M39 86L44 36H56L61 86Z'],[R(44,24,12,12),P(41,24,50,14,59,24),R(42.5,52,15,7),R(41,68,18,7),S(2.5,'M22 86H78')]]},
 {n:'プレゼント',p:[[R(24,44,52,40)],[R(20,34,60,12),R(45,34,10,50)],[S(3,'M50 34Q36 14 30 24Q28 32 50 34Q64 14 70 24Q72 32 50 34'),S(1.5,'M24 84H76')]]},
-{n:'ドーナツ',p:[[C(50,52,30),K(C(50,52,10))],['M22 50Q24 26 50 24Q76 26 78 50Q72 58 66 52Q60 62 52 56Q44 64 38 56Q30 62 22 50Z',K(C(50,52,12))],[S(2.5,'M36 38L40 34M52 30H57M64 40L67 44M30 46L34 49M46 40L49 44M70 48L66 50')]]}
+{n:'ドーナツ',p:[[C(50,52,30),K(C(50,52,10))],['M22 50Q24 26 50 24Q76 26 78 50Q72 58 66 52Q60 62 52 56Q44 64 38 56Q30 62 22 50Z',K(C(50,52,12))],[S(2.5,'M36 38L40 34M52 30H57M64 40L67 44M30 46L34 49M46 40L49 44M70 48L66 50')]]},
+{n:'りんご',p:[['M52 24Q64 12 74 22Q62 32 52 24Z'],['M50 34Q30 24 22 44Q16 70 38 84Q50 88 50 84Q50 88 62 84Q84 70 78 44Q70 24 50 34Z'],[S(3,'M50 34Q50 24 54 18'),S(2.5,'M32 46Q30 56 34 64')]]},
+{n:'すいか',p:[['M14 42A36 36 0 0 0 86 42Z'],['M21 42A29 29 0 0 0 79 42Z'],[E(38,52,2,3),E(50,57,2,3),E(62,52,2,3),E(44,65,2,3),E(56,65,2,3)]]},
+{n:'目覚まし時計',p:[[C(50,54,27)],[S(5,C(50,54,27)),C(30,25,7),C(70,25,7)],[S(3,'M50 54V38M50 54L62 60'),C(50,54,2.5),S(3,'M33 78L27 86M67 78L73 86'),S(2,'M50 31v4M50 73v4M27 54h4M69 54h4')]]},
+{n:'鍵',p:[[C(34,38,17),K(C(34,38,7))],[S(7,'M46 50L78 82')],[S(5,'M64 68L70 62M74 78L80 72'),S(2,C(34,38,17))]]},
+{n:'手紙',p:[[R(18,32,64,42)],[P(18,32,82,32,50,58)],['M50 70Q40 60 43 55Q47 51 50 57Q53 51 57 55Q60 60 50 70Z',S(2,'M18 74L40 54M82 74L60 54'),S(2,R(18,32,64,42))]]},
+{n:'ギター',p:[[C(38,66,18),C(52,48,12)],[S(6,'M58 42L80 20'),C(40,64,6)],[S(9,'M80 20L85 15'),S(1,'M37 66L81 18M43 69L83 20'),S(3,'M28 70L36 78')]]},
+{n:'きつね',p:[[P(20,36,80,36,50,84)],[P(20,36,24,12,44,34),P(80,36,76,12,56,34)],[C(50,79,4),S(2.5,'M34 50Q39 45 44 50M56 50Q61 45 66 50'),P(27,20,29,31,37,31),P(73,20,71,31,63,31)]]},
+{n:'ペンギン',p:[[E(50,62,15,20)],[P(43,40,57,40,50,49),E(40,87,8,3),E(60,87,8,3)],[E(50,54,25,32),K(E(50,62,15,20)),K(C(42,33,3)),K(C(58,33,3)),K(P(43,40,57,40,50,49))]]},
+{n:'かたつむり',p:[['M12 80Q12 70 24 70H72Q86 70 86 80Z'],[C(54,52,22)],[S(2.5,C(54,52,14)),S(2.5,C(54,52,6)),S(2,'M22 70L16 54M28 70L27 54'),C(16,52,2.5),C(27,52,2.5)]]},
+{n:'ヤシの木',p:[[C(72,30,14)],['M46 34Q28 20 14 34Q32 30 46 38Z','M46 34Q64 20 82 34Q62 30 48 38Z','M46 34Q40 14 22 14Q38 22 44 36Z','M46 34Q54 14 72 16Q56 22 50 36Z'],[S(6,'M46 36Q40 60 48 82'),'M18 86Q50 70 82 86Z']]},
+{n:'雪だるま',p:[[C(50,66,20),C(50,38,14)],[R(36,49,28,6),R(58,51,6,16),P(50,39,61,42,50,44)],[R(38,14,24,12),R(32,25,36,4),C(45,35,2),C(55,35,2),C(50,62,2.2),C(50,72,2.2),S(2,'M31 62L16 52M69 62L84 52')]]},
+{n:'こいのぼり',p:[['M24 38H70L86 28V64L70 54H24Q14 46 24 38Z'],['M24 38H36V54H24Q14 46 24 38Z',S(3,'M46 39q6 7 0 14M56 39q6 7 0 14M66 39q6 7 0 14')],[C(28,45,2.5),S(3,'M14 18V88'),C(14,16,4)]]},
+{n:'提灯',p:[[E(50,52,23,26)],[S(2,'M29 42Q50 48 71 42M27 52Q50 58 73 52M29 62Q50 68 71 62')],[R(40,21,20,6),R(40,77,20,6),S(2,'M50 21V12M50 83V90')]]},
+{n:'急須',p:[[E(46,58,24,18)],[E(46,42,14,4),C(46,36,4),'M68 54L86 42L84 50L72 64Z'],[S(4,'M24 50Q8 52 12 64Q16 72 26 68'),R(32,76,28,3),S(2,'M84 34Q80 28 84 22')]]},
+{n:'こけし',p:[[C(50,32,16),'M38 50H62L66 86H34Z'],ring(50,70,5,3,5).concat([R(36,50,28,5)]),['M34 30Q36 14 50 14Q64 14 66 30Q58 22 50 22Q42 22 34 30Z',S(1.5,'M43 34h5M52 34h5'),C(50,40,1.2),C(50,70,2)]]},
+{n:'鳥居',p:[[C(50,46,24)],[R(28,34,6,52),R(66,34,6,52),R(22,44,56,5)],['M14 24Q50 32 86 24L84 32Q50 38 16 32Z',S(2.5,'M16 86H84')]]},
+{n:'自転車',p:[[C(76,24,9),C(52,62,5)],[S(4,C(28,62,15)),S(4,C(72,62,15))],[S(3,'M28 62L44 38H64L72 62M44 38L52 62H28M52 62L64 38'),S(4,'M38 34H48'),S(3,'M64 38L62 28H70')]]},
+{n:'気球',p:[['M50 12Q82 14 80 44Q76 60 58 68H42Q24 60 20 44Q18 14 50 12Z'],['M50 12Q62 30 58 68H42Q38 30 50 12Z'],[R(43,78,14,10),S(1.5,'M42 68L44 78M58 68L56 78')]]},
+{n:'潜水艦',p:[[S(1.5,C(22,30,4)+C(30,20,2.5)),P(12,54,5,48,5,72,12,66)],['M22 50H70Q86 50 86 61Q86 72 70 72H22Q10 61 22 50Z'],[R(44,38,16,12),S(3,'M54 38V26H62'),C(36,61,4),C(52,61,4),C(68,61,4)]]},
+{n:'UFO',p:[[P(38,58,62,58,76,88,24,88)],['M36 46Q36 28 50 28Q64 28 64 46Z'],[E(50,52,32,9),K(C(32,52,2.5)),K(C(50,55,2.5)),K(C(68,52,2.5)),star(20,24,4),star(80,30,3)]]},
+{n:'パイナップル',p:[[E(50,62,18,23)],['M50 42L38 18L47 30L50 12L53 30L62 18Z'],[S(1.5,'M37 50L62 80M33 62L50 84M46 41L68 66M63 50L38 80M67 62L50 84M54 41L32 66')]]},
+{n:'キャンディ',p:[[C(50,40,22)],[S(4,'M50 40Q56 34 60 40Q64 52 50 54Q34 54 34 40Q36 24 52 24Q70 26 70 42')],[S(4,'M50 62V90'),P(50,68,40,62,40,74),P(50,68,60,62,60,74)]]},
+{n:'ハンバーガー',p:[['M20 46Q22 22 50 22Q78 22 80 46Z','M22 71H78Q78 83 68 83H32Q22 83 22 71Z'],['M16 53q8.5 -6 17 0t17 0t17 0t17 0V59H16Z',P(28,59,72,59,60,66)],[R(20,60,60,9),E(40,33,2.5,1.5),E(52,29,2.5,1.5),E(62,36,2.5,1.5)]]},
+{n:'ぶどう',p:[['M52 22Q70 12 80 26Q64 34 52 22Z'],[C(36,40,8),C(50,40,8),C(64,40,8),C(43,52,8),C(57,52,8),C(50,64,8),C(50,77,7)],[S(3,'M50 32V16'),S(2,'M32 38q1 -4 5 -5M46 38q1 -4 5 -5M60 38q1 -4 5 -5M39 50q1 -4 5 -5M53 50q1 -4 5 -5M46 62q1 -4 5 -5')]]},
+{n:'砂時計',p:[[P(37,78,63,78,50,60),P(42,34,58,34,50,46)],[S(3,'M32 22H68L52 50L68 78H32L48 50Z')],[R(28,16,44,6),R(28,78,44,6)]]},
+{n:'王冠',p:[['M20 70L16 34L36 52L50 26L64 52L84 34L80 70Z'],[R(20,70,60,10),C(16,32,4),C(50,24,4),C(84,32,4)],[P(36,71,39,75,36,79,33,75),P(50,71,53,75,50,79,47,75),P(64,71,67,75,64,79,61,75)]]},
+{n:'いかり',p:[[C(50,52,30)],[S(4,C(50,22,7)),P(17,62,24,50,31,64),P(83,62,76,50,69,64)],[S(5,'M50 29V80M24 60Q26 80 50 80Q74 80 76 60M37 42H63')]]},
+{n:'電車',p:[['M26 30H74Q80 30 80 36V74H20V36Q20 30 26 30Z'],[R(26,38,20,14),R(54,38,20,14),R(20,58,60,5)],[C(30,68,3),C(70,68,3),R(24,74,52,5),S(2.5,'M12 86H88'),S(2,'M40 30L50 20L60 30')]]},
+{n:'鉛筆',p:[[P(30,76,62,20,76,28,44,84)],[P(62,20,68,10,82,18,76,28)],[P(30,76,44,84,28,90),S(1.5,'M37 80L69 24')]]},
+{n:'おばけ',p:[['M26 84V46Q26 20 50 20Q74 20 74 46V84L66 76L58 84L50 76L42 84L34 76Z'],[C(37,55,4),C(63,55,4)],[E(42,44,3.5,5),E(58,44,3.5,5),E(50,61,4,5)]]}
 ];
 // 配色 [薄, 中, 濃]
 var PAL=[['#ffd23f','#ff5d73','#2a6fdb'],['#ffb84d','#e8436e','#1f8a8a'],['#f6e05e','#3ccfb0','#6b4fd8'],['#ffa8b8','#f5a623','#3b3f9c'],
@@ -218,12 +282,21 @@ var PAL=[['#ffd23f','#ff5d73','#2a6fdb'],['#ffb84d','#e8436e','#1f8a8a'],['#f6e0
 var PAPERS=['#f6f0e1','#efe4c8','#eaf0ee','#f6e4dc'];
 var TEX_N=3,BG_N=6; // 塗りの質感(ベタ/網点/斜線)・地模様の種類数
 // 刷り違い: 同じ絵柄でも配色・色の入れ替え・質感・地模様・紙・左右反転が変わる
-function variant(mi,n){ // n=刷れた枚数。最初の3枚は素直な刷り
+// 特色刷り(レア)。図鑑で絵柄ごとに集める
+var SP=[
+{n:'金刷り',c:['#f0cf6a','#c8922a','#3a2a12']},
+{n:'藍刷り',c:['#a9c4e6','#4a78c0','#16264f']},
+{n:'蛍光刷り',c:['#fff44f','#ff4fa3','#2f2bd8']},
+{n:'墨刷り',c:['#d2d2d2','#8a8a8a','#1c1c1c']},
+{n:'夕焼け刷り',c:['#ffc56b','#f26a4b','#5b2a6e']}
+];
+function variant(mi,n,sp){ // n=刷れた枚数。最初の3枚は素直な刷り
   var rich=n>=3;
-  return {mi:mi,pal:rnd(PAL.length),sw:rich?rnd(2):0,tex:rich?rnd(TEX_N):0,tp:rnd(2),bg:rich?rnd(BG_N):0,paper:rich?rnd(PAPERS.length):0,flip:rnd(2)};
+  if(sp===undefined)sp=rich&&rnd(RARE_ONE_IN)===0?1+rnd(SP.length):0;
+  return {mi:mi,sp:sp,pal:rnd(PAL.length),sw:rich&&!sp?rnd(2):0,tex:rich?rnd(TEX_N):0,tp:rnd(2),bg:rich?rnd(BG_N):0,paper:rich?rnd(PAPERS.length):0,flip:rnd(2)};
 }
-function plain(mi){return {mi:mi,pal:mi%PAL.length,sw:0,tex:0,tp:0,bg:0,paper:0,flip:0}}
-function cols(v){var c=PAL[v.pal];return v.sw?[c[1],c[0],c[2]]:[c[0],c[1],c[2]]}
+function plain(mi){return {mi:mi,sp:0,pal:mi%PAL.length,sw:0,tex:0,tp:0,bg:0,paper:0,flip:0}}
+function cols(v){if(v.sp)return SP[v.sp-1].c.slice();var c=PAL[v.pal];return v.sw?[c[1],c[0],c[2]]:[c[0],c[1],c[2]]}
 
 /* ================= ユーティリティ ================= */
 function $(id){return document.getElementById(id)}
@@ -299,7 +372,7 @@ function compose(g,px,pl,tf,v){
   g.globalCompositeOperation='multiply';g.globalAlpha=.93;
   pl.forEach(function(c,i){
     var t=(tf&&tf[i])||{x:0,y:0,r:0};
-    g.setTransform(1,0,0,1,px/2+t.x*k,px/2+t.y*k);g.rotate(t.r*Math.PI/180);
+    g.setTransform(1,0,0,1,px/2+t.x*k,px/2+t.y*k);g.rotate(t.r*Math.PI/180);if(t.s)g.scale(1+t.s,1+t.s);
     g.drawImage(c,-px/2,-px/2,px,px);
   });
   g.setTransform(1,0,0,1,0,0);g.globalAlpha=1;g.globalCompositeOperation='source-over';
@@ -333,17 +406,32 @@ function beep(f,d,type,v,f2){
 }
 function sTick(){beep(900,.03,'square',.025)}
 function sOk(){beep(520,.12,'triangle',.09);setTimeout(function(){beep(780,.2,'triangle',.09)},110)}
+function sRare(){[660,880,1100,1320].forEach(function(f,i){setTimeout(function(){beep(f,.16,'triangle',.08)},i*80)})}
+function sHeal(){setTimeout(function(){beep(990,.25,'sine',.09,1480)},260)}
+function buzz(){try{if(navigator.vibrate)navigator.vibrate(70)}catch(e){}}
 function sNg(){beep(170,.28,'sawtooth',.06,85)}
 
 /* ================= 図鑑(保存は保証なし・できたら使う) ================= */
-var seen={};
-try{(JSON.parse(localStorage.getItem(STORE_KEY)||'[]')||[]).forEach(function(n){seen[n]=1})}catch(e){}
-function collect(mi){seen[W[mi].n]=1;try{localStorage.setItem(STORE_KEY,JSON.stringify(Object.keys(seen)))}catch(e){}}
-function seenCount(){return W.filter(function(m){return seen[m.n]}).length}
+var book={},best=0; // book[絵柄名]={c:刷った枚数,s:[集めた特色の番号]}
+try{
+  var raw=localStorage.getItem(STORE_KEY);
+  if(raw){var o=JSON.parse(raw);if(o&&typeof o==='object')book=o}
+  else (JSON.parse(localStorage.getItem(OLD_KEY)||'[]')||[]).forEach(function(n){book[n]={c:1,s:[]}});
+  best=+localStorage.getItem(BEST_KEY)||0;
+}catch(e){}
+function collect(va){
+  var n=W[va.mi].n,b=book[n]||(book[n]={c:0,s:[]}),isNew=false;
+  b.c++;if(!b.s)b.s=[];
+  if(va.sp&&b.s.indexOf(va.sp)<0){b.s.push(va.sp);isNew=true}
+  try{localStorage.setItem(STORE_KEY,JSON.stringify(book))}catch(e){}
+  return isNew;
+}
+function seenCount(){return W.filter(function(m){return book[m.n]}).length}
+function spCount(){var t=0;W.forEach(function(m){var b=book[m.n];if(b&&b.s)t+=b.s.length});return t}
 
 /* ================= ゲーム本体 ================= */
 var cv=$('cv'),ctx=cv.getContext('2d'),paper=$('paper');
-var plates=[],cur=null,prints=0,lives=LIVES,works=[],bag=[],tLeft=0,tMax=1,running=false,busy=false,dials=[],sent=false;
+var plates=[],cur=null,prints=0,lives=LIVES,works=[],bag=[],tLeft=0,tMax=1,running=false,busy=false,dials=[],sent=false,streak=0,told={};
 
 function fit(){
   var r=$('stage').getBoundingClientRect();
@@ -357,21 +445,32 @@ function offs(){
   return cur.ax.map(function(_,i){var s=0;for(var j=0;j<cur.v.length;j++)s+=cur.M[i][j]*(cur.v[j]-cur.sol[j]);return s});
 }
 function tfs(){
-  var o=offs(),t=[0,1,2].map(function(){return {x:0,y:0,r:0}});
-  cur.ax.forEach(function(a,i){t[a.p][a.t]+=o[i]*(a.t==='r'?cur.u*1.3:cur.u)});
+  var o=offs(),t=[0,1,2].map(function(){return {x:0,y:0,r:0,s:0}});
+  cur.ax.forEach(function(a,i){t[a.p][a.t]+=o[i]*(a.t==='r'?cur.u*1.3:a.t==='s'?cur.u*.022:cur.u)});
   return t;
 }
 function draw(){if(cur)compose(ctx,cv.width,plates,tfs(),cur.va)}
 function hud(){
   var h='';for(var i=0;i<LIVES;i++)h+=i<lives?'●':'<s>●</s>';
-  $('lives').innerHTML=h;$('cnt').textContent=prints;
+  $('lives').innerHTML=h;$('cnt').textContent=prints;$('stk').textContent=streak>=2?'連続'+streak:'';
 }
 var ICON={
   x:'<svg viewBox="0 0 16 16"><path d="M2 8h12M5 5L2 8l3 3M11 5l3 3-3 3"/></svg>',
   y:'<svg viewBox="0 0 16 16"><path d="M8 2v12M5 5l3-3 3 3M5 11l3 3 3-3"/></svg>',
-  r:'<svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.6-3.7M12 1.5v3.2H8.8"/></svg>'
+  r:'<svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.6-3.7M12 1.5v3.2H8.8"/></svg>',
+  s:'<svg viewBox="0 0 16 16"><path d="M3 13L13 3M8.5 3H13v4.5M7.5 13H3V8.5"/></svg>'
 };
-var ARW={x:['◀','▶'],y:['▲','▼'],r:['↺','↻']};
+var ARW={x:['◀','▶'],y:['▲','▼'],r:['↺','↻'],s:['小','大']};
+var HINTS={start:'ボタンで版を動かし、四すみの＋印を重ねよう',two:'動く版が2枚に。色でボタンを見分けよう',r:'↺↻ 回転のボタンが登場',link:'色の札が2つあるボタンは、2か所が同時に動く',s:'小・大 版の大きさを変えるボタンが登場'};
+function hintFor(c){
+  var k=prints===0?'start':null;
+  if(!k&&c.scl&&!told.s)k='s';
+  if(!k&&c.links&&!told.link)k='link';
+  if(!k&&c.rot&&!told.r)k='r';
+  if(!k&&c.mov>1&&!told.two)k='two';
+  if(k)told[k]=1;
+  $('hint').textContent=k?HINTS[k]:'';
+}
 function buildKnobs(){
   var box=$('knobs'),n=cur.ax.length;box.innerHTML='';dials=[];
   for(var j=0;j<n;j++){(function(j){
@@ -408,13 +507,13 @@ function newSheet(){
   if(!bag.length){bag=[];for(var i=0;i<W.length;i++)bag.push(i);shuffle(bag)}
   var va=variant(bag.pop(),prints);
   var mov=shuffle([0,1,2]).slice(0,c.mov),ax=[];
-  mov.forEach(function(p,k){ax.push({p:p,t:'x'},{p:p,t:'y'});if(k<c.rot)ax.push({p:p,t:'r'})});
+  mov.forEach(function(p,k){ax.push({p:p,t:'x'},{p:p,t:'y'});if(k<c.rot)ax.push({p:p,t:'r'});if(k>=c.mov-c.scl)ax.push({p:p,t:'s'})});
   var n=ax.length,M=ax.map(function(_,i){return ax.map(function(_,j){return i===j?1:0})});
   var L=c.links,guard=0;
   while(L>0&&guard++<60){var j=1+rnd(n-1),i2=rnd(j);if(!M[i2][j]){M[i2][j]=Math.random()<.5?1:-1;L--}}
   var sol=ax.map(function(){return (1+rnd(c.range))*(Math.random()<.5?1:-1)});
   cur={va:va,cols:cols(va),ax:ax,M:M,sol:sol,v:ax.map(function(){return 0}),u:c.u};
-  buildKnobs();fit();plates=makePlates(va,cv.width,true);
+  hintFor(c);buildKnobs();fit();plates=makePlates(va,cv.width,true);
   tMax=tLeft=c.time;$('tbar').style.transform='scaleX(1)';draw();
 }
 function toast(msg,cls){
@@ -435,14 +534,21 @@ function onPrint(){
   if(!running||busy)return;au();
   var ok=offs().every(function(o){return o===0});
   if(ok){
-    prints++;works.push(cur.va);collect(cur.va.mi);hud();sOk();toast('「'+W[cur.va.mi].n+'」完成！','ok');nextSheet();
+    var va=cur.va,name='「'+W[va.mi].n+'」',heal=false;
+    prints++;streak++;works.push(va);collect(va);
+    if(streak%HEAL_EVERY===0&&lives<LIVES){lives++;heal=true}
+    hud();
+    if(va.sp){sRare();toast('★ '+SP[va.sp-1].n+'\n'+name+(heal?'\nライフ回復！':''),'sp')}
+    else{sOk();toast(name+'完成！'+(heal?'\nライフ回復！':''),'ok')}
+    if(heal)sHeal();
+    nextSheet();
   }else{
-    lives--;hud();sNg();toast('ズレてる！','ng');
+    lives--;streak=0;hud();sNg();buzz();toast('ズレてる！','ng');
     if(lives<=0){busy=true;anim('pshake',320,gameOver)}else anim('pshake',320);
   }
 }
 function onTimeout(){
-  lives--;hud();sNg();toast('時間切れ','ng');
+  lives--;streak=0;hud();sNg();buzz();toast('時間切れ','ng');
   if(lives<=0){busy=true;setTimeout(gameOver,500)}else nextSheet();
 }
 function sendScore(score){
@@ -452,31 +558,51 @@ function sendScore(score){
 }
 function gameOver(){
   running=false;busy=false;sendScore(prints);
-  $('oNum').textContent=prints;
+  var nb=prints>best;if(nb){best=prints;try{localStorage.setItem(BEST_KEY,String(best))}catch(e){}}
+  $('oNum').textContent=prints;$('oRank').textContent='称号：'+rank(prints)+(nb?'　自己ベスト更新！':'');
   var g=$('oGrid');g.innerHTML='';
   if(!works.length)g.innerHTML='<div class="empty">まだ1枚も刷れていません。<br>トンボ（＋印）をよく見て合わせよう</div>';
-  works.forEach(function(w){var c=document.createElement('div');c.className='cell';var t=document.createElement('div');t.className='th';t.appendChild(thumb(w,84));c.appendChild(t);var s=document.createElement('span');s.textContent=W[w.mi].n;c.appendChild(s);g.appendChild(c)});
+  works.forEach(function(w){var c=document.createElement('div');c.className='cell';var t=document.createElement('div');t.className='th';t.appendChild(thumb(w,84));c.appendChild(t);var s=document.createElement('span');s.textContent=(w.sp?'★':'')+W[w.mi].n;c.appendChild(s);g.appendChild(c)});
   show('over');
 }
 function start(){
-  au();prints=0;lives=LIVES;works=[];bag=[];sent=false;running=true;busy=false;cur=null;
+  au();prints=0;lives=LIVES;streak=0;works=[];bag=[];sent=false;running=true;busy=false;cur=null;
   show('game');hud();newSheet();anim('pin',240);
 }
 function home(){
-  running=false;show('title');
+  running=false;$('det').classList.remove('on');show('title');
+  $('best').textContent=best>0?'自己ベスト '+best+'枚 ・ '+rank(best):'';
   var h=$('hero');h.innerHTML='';
   h.appendChild(thumb(variant(rnd(W.length),9),150,[{x:0,y:0,r:0},{x:1.6,y:-1.1,r:0},{x:-1.4,y:1.3,r:1.2}]));
   $('galN').textContent=seenCount()+' / '+W.length;
 }
+var detI=0;
+function detail(i,va){
+  detI=i;var m=W[i],b=book[m.n]||{c:0,s:[]},h=$('dImg');
+  h.innerHTML='';h.appendChild(thumb(va||plain(i),240));
+  $('dName').textContent=(va&&va.sp?'★ ':'')+m.n;
+  var sp=(b.s||[]).map(function(k){return SP[k-1].n}).join('・');
+  $('dInfo').innerHTML='刷った枚数 '+b.c+'<br>特色 ★'+(b.s||[]).length+' / '+SP.length+(sp?'（'+sp+'）':'');
+  $('det').classList.add('on');
+}
+function detailNext(){
+  var b=book[W[detI].n]||{s:[]},s=b.s||[];
+  detail(detI,variant(detI,9,s.length&&rnd(3)===0?s[rnd(s.length)]:0));
+}
 function gallery(all){
   var g=$('gGrid');g.innerHTML='';
   W.forEach(function(m,i){
-    var c=document.createElement('div');c.className='cell';var t=document.createElement('div'),s=document.createElement('span');
-    if(all||seen[m.n]){t.className='th';t.appendChild(thumb(plain(i),84));s.textContent=m.n}
+    var c=document.createElement('div');c.className='cell';var t=document.createElement('div'),s=document.createElement('span'),b=book[m.n];
+    if(all||b){
+      t.className='th';t.appendChild(thumb(plain(i),84));s.textContent=m.n;
+      if(b&&b.c>1){var d=document.createElement('i');d.className='bd';d.textContent='×'+b.c;t.appendChild(d)}
+      if(b&&b.s&&b.s.length){var e=document.createElement('i');e.className='bd st';e.textContent='★'+b.s.length;t.appendChild(e)}
+      c.addEventListener('click',function(){detail(i)});
+    }
     else{t.className='th q';t.textContent='？';s.textContent='???'}
     c.appendChild(t);c.appendChild(s);g.appendChild(c);
   });
-  $('galInfo').textContent=seenCount()+' / '+W.length+' 柄 ・ 刷り違いあり';
+  $('galInfo').textContent=seenCount()+' / '+W.length+' 柄 ・ 特色 ★'+spCount()+' / '+(W.length*SP.length);
   show('gal');
 }
 
@@ -496,6 +622,8 @@ $('bHome').addEventListener('click',home);
 $('bBack').addEventListener('click',home);
 $('bGal').addEventListener('click',function(){gallery(false)});
 $('bPrint').addEventListener('click',onPrint);
+$('dClose').addEventListener('click',function(){$('det').classList.remove('on')});
+$('dNext').addEventListener('click',detailNext);
 $('mute').addEventListener('click',function(){
   muted=!muted;this.textContent=muted?'音 OFF':'音 ON';this.classList.toggle('off',muted);if(!muted)sTick();
 });
@@ -521,7 +649,7 @@ document.documentElement.style.setProperty('--top',topInset()+'px');
 home();loadUser();requestAnimationFrame(loop);
 try{if(new URLSearchParams(location.search).get('gallery'))gallery(true)}catch(e){}
 // 動作確認用(?debug=1 のときだけ有効)
-try{if(new URLSearchParams(location.search).get('debug'))window.__pz={cur:function(){return cur},state:function(){return {prints:prints,lives:lives,running:running,busy:busy}},setPrints:function(n){prints=n}}}catch(e){}
+try{if(new URLSearchParams(location.search).get('debug'))window.__pz={cur:function(){return cur},state:function(){return {prints:prints,lives:lives,running:running,busy:busy,streak:streak}},setLives:function(n){lives=n},setPrints:function(n){prints=n}}}catch(e){}
 })();
 </script>
 </body>
