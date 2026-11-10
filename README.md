@@ -5,6 +5,7 @@
 ## 遊び方
 
 - 色つきのつまみを回し、四すみのトンボ（＋印）を重ねて「刷る」。つまみの左右タップでも1目盛りずつ動きます。
+- つまみ領域では、CSSとキャンセル可能なタッチイベントの両方でダブルタップ拡大を抑止します。回す操作・左右タップはPointer Eventsで処理し、他のボタンや終了画面のスクロールには影響させません。
 - 調整中に見えるのは、版の周辺の試し刷りだけ。成功すると輪郭・表情を含む完成図が現れ、約1.5秒眺めてから次の紙へ進みます。
 - ライフは3つ。ミス・時間切れで1つ減り、5枚連続成功で1つ回復します。
 - 枚数が進むと、動く版が増え、回転・連動・拡大縮小が順に登場します。版数は常に3枚です。
@@ -42,4 +43,4 @@
 ## ローカル確認
 
 `python -m http.server 4173` を実行して http://localhost:4173 を開きます。
-ブラウザ回帰検証は `node tests/game.cjs`。開発依存は `npm install --no-save sharp playwright` で導入できます。Chromiumは `/usr/bin/chromium`、`CHROMIUM_PATH` 指定、またはPlaywright付属のものを使用します。
+ブラウザ回帰検証は `node tests/game.cjs`、連打・回転のタッチ操作検証は `node tests/touch.cjs`。開発依存は `npm install --no-save sharp playwright` で導入できます。Chromiumは `/usr/bin/chromium`、`CHROMIUM_PATH` 指定、またはPlaywright付属のものを使用します。

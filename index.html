@@ -63,6 +63,7 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
 #toast.sp{color:#a06a00}
 #toast.show{animation:tst .8s ease-out}
 @keyframes tst{0%{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(1.5)}15%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}75%{opacity:1}100%{opacity:0}}
+.knobs,.knobs *{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .knobs{display:grid;gap:6px 4px;padding:8px 0;flex:none;justify-items:center}
 .kn{display:flex;flex-direction:column;align-items:center;gap:4px;touch-action:none;cursor:grab;padding:2px 6px}
 .dial{width:var(--d);height:var(--d);border-radius:50%;position:relative;border:4px solid var(--c);
@@ -598,6 +599,12 @@ function loop(ts){
   }
   requestAnimationFrame(loop);
 }
+// 埋め込みWebViewでも連打による拡大を防ぐため、CSSの指定に加えて対策する。
+// つまみはPointer Eventsで操作するため、互換タッチイベントの既定動作だけ止める。
+// 他のボタンのclickや結果一覧のスクロールには触れない。
+function preventKnobZoom(e){if(e.cancelable)e.preventDefault()}
+$('knobs').addEventListener('touchstart',preventKnobZoom,{passive:false});
+$('knobs').addEventListener('touchend',preventKnobZoom,{passive:false});
 $('bStart').addEventListener('click',start);
 $('bRetry').addEventListener('click',start);
 $('bHome').addEventListener('click',home);
