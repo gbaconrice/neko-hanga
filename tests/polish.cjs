@@ -62,13 +62,14 @@ async function main(){
  const mv=await st(page),neat=mv.moves===mv.minMoves;assert(mv.moves>=mv.minMoves&&mv.minMoves>0);
  assert.equal(await page.locator('.kn.locked').count(),knobs.length);assert.equal(await page.locator('#paper.aligned').count(),1);
  assert((await page.locator('#paper .lk').count())>=4,'rings pulse on the registration marks');
- // 完成の瞬間: 背景は中央から広がる。広がりきると、控えと同じ絵になる。
+ // 完成の瞬間: ローラーが左から通り、通った所から完成図に替わる。
  await page.click('#bPrint');
  assert.equal(await page.locator('#toast b').textContent().then(s=>/^\+\d+$/.test(s)),true,'the gained points are shown large');
  assert.equal(await page.locator('#combo').textContent(),'1連続中　次の得点 ×1.1');
  assert.equal((await page.locator('#toast').textContent()).includes('むだなし'),neat,'the neat bonus needs the fewest steps');
  assert.equal(await page.evaluate(()=>window.__pz.works()[0].tags.includes('むだなし')),neat);
- const corner=()=>page.locator('#cv').evaluate(c=>{const d=c.getContext('2d').getImageData(4,4,1,1).data;return Math.abs(d[0]-245)+Math.abs(d[1]-239)+Math.abs(d[2]-222)});
+ // ローラーは左から通るので、最後に替わる右上の隅で確かめる
+ const corner=()=>page.locator('#cv').evaluate(c=>{const d=c.getContext('2d').getImageData(c.width-5,4,1,1).data;return Math.abs(d[0]-245)+Math.abs(d[1]-239)+Math.abs(d[2]-222)});
  assert((await corner())<12,'the corner is still paper when the print lands');
  await page.clock.runFor(600);
  assert((await corner())>30,'the background reaches the corner');
@@ -98,7 +99,7 @@ async function main(){
 
  // 残り時間が少なくなると、バーが警告表示になる。次の紙で消える。
  assert.equal(await page.locator('.bar.low').count(),0);
- const lim=await st(page);assert(lim.tMax<45&&lim.tMax>=38,'the time limit shrinks as sheets go by '+lim.tMax);
+ const lim=await st(page);assert(lim.baseTime<45&&lim.baseTime>=38,'the base time limit shrinks as sheets go by (carried time is added on top) '+lim.baseTime);
  await page.clock.runFor(Math.round((lim.tLeft-3.5)*1000)); // 1コマずつ進める(ゲーム内の時間は1コマ最大0.1秒)
  await page.waitForFunction(()=>document.querySelector('.bar.low'));
  assert.equal((await st(page)).lives,3,'the warning appears before the time runs out');
