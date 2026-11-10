@@ -22,14 +22,23 @@ async function main(){
  const solve=async page=>{await page.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});await page.click('#bPrint')};
 
  const page=await open('http://127.0.0.1:4173/?debug=1&top=98');
- // タイトルの絵は動き、タップすると別の作品に替わる。
+ // 題字は1文字ずつ左から現れ、最後に肉球の判子が出る。説明は文章で読める。
+ assert.equal(await page.locator('#logo.play span').count(),4);
+ const delays=await page.locator('#logo span').evaluateAll(els=>els.map(e=>parseFloat(getComputedStyle(e).animationDelay)));
+ assert(delays.every((d,i)=>i===0||d>delays[i-1]),'letters appear left to right '+delays);
+ assert((await page.locator('#stamp').evaluate(e=>parseFloat(getComputedStyle(e).animationDelay)))>delays[3],'the stamp lands last');
+ assert.equal(await page.locator('#logo').getAttribute('aria-label'),'ねこ版画');
+ const how=await page.locator('.how li').allTextContents();assert.equal(how.length,3);assert(how.every(s=>s.endsWith('。')),'rules are full sentences');
+ assert.equal(await page.evaluate(()=>document.fonts.check('900 20px NekoMaru','ねこ版画刷る')),true,'the rounded font is embedded');
+ // タイトルの絵は動く。タップしても別の作品には替わらず、鳴かない。
  await page.waitForFunction(()=>window.__pz.state().hero>=0);
  const h0=await page.locator('#hero canvas').evaluate(c=>c.toDataURL());
  await page.clock.runFor(900);
  assert.notEqual(await page.locator('#hero canvas').evaluate(c=>c.toDataURL()),h0,'the title cat moves');
- const heroes=new Set([(await st(page)).hero]);
- for(let i=0;i<4;i++){const before=(await st(page)).hero;await page.click('#hero');await page.waitForFunction(n=>window.__pz.state().hero!==n,before);heroes.add((await st(page)).hero)}
- assert(heroes.size>1,'tapping the title art shows another work');
+ const heroBefore=await st(page);
+ for(let i=0;i<3;i++){await page.click('#hero');await page.clock.runFor(200)}
+ const heroAfter=await st(page);
+ assert.equal(heroAfter.hero,heroBefore.hero,'tapping the title art keeps the same work');assert.equal(heroAfter.audioPlayed,heroBefore.audioPlayed,'the title art stays quiet');
  await page.click('#bStart');await page.waitForFunction(()=>!window.__pz.state().busy);
  // 最初の一枚: つまみに触れるまで時間は減らず、回す案内が出る。触れると案内が消えて時間が動く。
  assert((await st(page)).waitTouch);assert.equal(await page.locator('.tip').count(),1);
@@ -43,9 +52,19 @@ async function main(){
  await page.mouse.up();
  assert.equal((await st(page)).focus,null);assert.equal(await page.locator('.tip').count(),0);
  await page.clock.runFor(1000);assert((await bar())<full,'the timer runs after the first touch');
+ // 版が合うと、つまみと「刷る」が反応する。合うまでは反応しない。
+ assert.equal(await page.locator('#bPrint.ready,.kn.locked,#paper.aligned').count(),0);
+ assert.equal(await page.locator('#sheetNo').textContent(),'1枚目');assert.equal(await page.locator('#combo.none').count(),1);
+ const knobs=await page.evaluate(()=>{const c=window.__pz.cur();return c.sol.map((s,i)=>s-c.v[i])});
+ for(let j=0;j<knobs.length;j++){const b=await page.locator('.kn .dial').nth(j).boundingBox();
+  for(let n=0;n<Math.abs(knobs[j]);n++){await page.mouse.move(b.x+b.width*(knobs[j]>0?.8:.2),b.y+b.height/2);await page.mouse.down();await page.mouse.up()}}
+ assert.equal(await page.locator('#bPrint.ready').count(),1,'the print button lights up when every plate is aligned');
+ assert.equal(await page.locator('.kn.locked').count(),knobs.length);assert.equal(await page.locator('#paper.aligned').count(),1);
+ assert((await page.locator('#paper .lk').count())>=4,'rings pulse on the registration marks');
  // 完成の瞬間: 背景は中央から広がる。広がりきると、控えと同じ絵になる。
- await page.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});
  await page.click('#bPrint');
+ assert.equal(await page.locator('#toast b').textContent().then(s=>/^\+\d+$/.test(s)),true,'the gained points are shown large');
+ assert.equal(await page.locator('#combo').textContent(),'1連続中　次の得点 ×1.1');assert.equal(await page.locator('#bPrint.ready').count(),0);
  const corner=()=>page.locator('#cv').evaluate(c=>{const d=c.getContext('2d').getImageData(4,4,1,1).data;return Math.abs(d[0]-245)+Math.abs(d[1]-239)+Math.abs(d[2]-222)});
  assert((await corner())<12,'the corner is still paper when the print lands');
  await page.clock.runFor(600);
@@ -99,14 +118,18 @@ async function main(){
  const bb=await page.locator('#bookCanvas').boundingBox();
  await page.mouse.move(bb.x+bb.width*.75,bb.y+bb.height*.5);await page.mouse.down();await page.mouse.move(bb.x+bb.width*.25,bb.y+bb.height*.5,{steps:5});await page.mouse.up();
  await page.waitForFunction(()=>window.__pz.state().bookIndex===1);
- const played=(await st(page)).audioPlayed;await page.click('#bookCanvas');await page.waitForFunction(n=>window.__pz.state().audioPlayed>n,played);
+ // 絵をタップすると動きを最初から見直せる。鳴き声は出さない。
+ const played=(await st(page)).audioPlayed;await page.click('#bookCanvas');await page.clock.runFor(300);
+ assert.equal((await st(page)).audioPlayed,played,'tapping a page stays quiet');
+ assert.equal(await page.locator('#over .lbl').count(),0,'no heading label on the result');
+ assert.equal(await page.locator('#oPrints').textContent(),'5枚');assert((await page.locator('#oRank').textContent()).length>0);
  for(let i=2;i<5;i++){await page.click('#bookNext');await page.waitForFunction(n=>window.__pz.state().bookIndex===n,i)}
  assert(await page.locator('#bookNext').isDisabled());
  assert.equal(await page.locator('#bookCount').textContent(),'5 / 5');
  for(const size of [{width:390,height:844},{width:360,height:640},{width:320,height:568}]){
   await page.setViewportSize(size);await page.waitForTimeout(100);
-  const layout=await page.evaluate(()=>{const p=document.querySelector('#bookPage').getBoundingClientRect(),row=document.querySelector('#over>.row').getBoundingClientRect();return {top:p.top,bottom:p.bottom,width:p.width,row:row.bottom,nav:document.querySelector('#bookNav').getBoundingClientRect().bottom}});
-  assert(layout.top>=98&&layout.width>=150&&layout.nav<=size.height&&layout.row<=size.height,'storybook fits embedded phone '+JSON.stringify({size,layout}));
+  const layout=await page.evaluate(()=>{const p=document.querySelector('#bookPage').getBoundingClientRect(),row=document.querySelector('#over>.row').getBoundingClientRect();return {top:p.top,bottom:p.bottom,width:p.width,row:row.bottom,nav:document.querySelector('#bookFoot').getBoundingClientRect().bottom,arrow:document.querySelector('#bookNext').getBoundingClientRect().width}});
+  assert(layout.top>=98&&layout.width>=150&&layout.nav<=layout.row&&layout.arrow>=40&&layout.row<=size.height,'storybook fits embedded phone '+JSON.stringify({size,layout}));
  }
  await page.screenshot({path:'/workspace/scratch/animation/storybook.png'});
  assert.equal(await page.evaluate(()=>window.scoreMessages.length),1);
@@ -132,6 +155,6 @@ async function main(){
 
  assert.deepEqual(errors,[]);
  await browser.close();
- console.log('PASS: live title art, first-touch timer and knob hint, plate focus, background bloom, reveal skip by paper/print button and auto-advance, low-time warning, storybook (one work per page, animation, replay voice, arrows, swipe, keyboard, boundaries, empty state, phone layouts), bounded decoded artwork cache, GRAVITY entry loader without iframe.');
+ console.log('PASS: logo reveal and stamp, sentence rules, embedded rounded font, quiet title art, plate lock and ready feedback, first-touch timer and knob hint, plate focus, background bloom, reveal skip by paper/print button and auto-advance, low-time warning, storybook (one work per page, animation, replay voice, arrows, swipe, keyboard, boundaries, empty state, phone layouts), bounded decoded artwork cache, GRAVITY entry loader without iframe.');
 }
 main().catch(e=>{console.error(e);process.exit(1)});
