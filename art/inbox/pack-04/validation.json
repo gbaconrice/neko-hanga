@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "works": 45,
+  "totalPreparedWorks": 144,
+  "uniqueCoreImages": 45,
+  "checkedArtFiles": 135,
+  "palette": [
+    "#d78479",
+    "#3b6863",
+    "#c4a052",
+    "#f5efde"
+  ],
+  "coreSize": 512,
+  "backgroundSize": 384,
+  "completeSize": 512,
+  "inkPixelsOnTileBoundary": 0,
+  "motionCoordinatesValidated": true
+}
