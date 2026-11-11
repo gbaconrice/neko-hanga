@@ -59,15 +59,14 @@ async function main(){
  for(let j=0;j<knobs.length;j++){const b=await page.locator('.kn .dial').nth(j).boundingBox();
   for(let n=0;n<Math.abs(knobs[j]);n++){await page.mouse.move(b.x+b.width*(knobs[j]>0?.8:.2),b.y+b.height/2);await page.mouse.down();await page.mouse.up()}}
  assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('#bPrint')).animationName),'none','the print button does not light up');
- const mv=await st(page),neat=mv.moves===mv.minMoves;assert(mv.moves>=mv.minMoves&&mv.minMoves>0);
+ assert((await st(page)).moves>0);
  assert.equal(await page.locator('.kn.locked').count(),knobs.length);assert.equal(await page.locator('#paper.aligned').count(),1);
  assert((await page.locator('#paper .lk').count())>=4,'rings pulse on the registration marks');
  // 完成の瞬間: ローラーが左から通り、通った所から完成図に替わる。
  await page.click('#bPrint');
  assert.equal(await page.locator('#toast b').textContent().then(s=>/^\+\d+$/.test(s)),true,'the gained points are shown large');
  assert.equal(await page.locator('#combo').textContent(),'1連続中　次の得点 ×1.1');
- assert.equal((await page.locator('#toast').textContent()).includes('むだなし'),neat,'the neat bonus needs the fewest steps');
- assert.equal(await page.evaluate(()=>window.__pz.works()[0].tags.includes('むだなし')),neat);
+ assert.equal((await page.locator('#toast').textContent()).includes('むだなし'),false,'the neat bonus was removed');
  // ローラーは左から通るので、最後に替わる右上の隅で確かめる
  const corner=()=>page.locator('#cv').evaluate(c=>{const d=c.getContext('2d').getImageData(c.width-5,4,1,1).data;return Math.abs(d[0]-245)+Math.abs(d[1]-239)+Math.abs(d[2]-222)});
  assert((await corner())<12,'the corner is still paper when the print lands');

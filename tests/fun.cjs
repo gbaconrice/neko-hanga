@@ -72,7 +72,7 @@ assert(!(await page.locator('#paper').evaluate(e=>e.classList.contains('gone')))
  // 回帰: 狭い画面で★特色の札が出ても、札は1行のまま折り返して並び、画面からはみ出さない。
  for(const w of [320,360,390]){
   await page.setViewportSize({width:w,height:w===390?844:568});
-  const stats=await page.evaluate(()=>{document.querySelector('#oPrints').textContent='12枚';document.querySelector('#oStreak').textContent='12回';document.querySelector('#oOrders').textContent='3件';
+  const stats=await page.evaluate(()=>{document.querySelector('#oPrints').textContent='12枚';document.querySelector('#oStreak').textContent='12回';
    document.querySelector('#oSp').textContent='2枚';document.querySelector('#oSpItem').hidden=false;window.dispatchEvent(new Event('resize'));
    const r=e=>e.getBoundingClientRect(),items=[...document.querySelectorAll('.stats li')].filter(e=>!e.hidden).map(e=>r(e));
    return {vw:innerWidth,vh:innerHeight,tall:Math.max(...items.map(q=>q.height)),left:Math.min(...items.map(q=>q.left)),right:Math.max(...items.map(q=>q.right)),row:r(document.querySelector('#over .row')).bottom,book:r(document.querySelector('#bookPage')).width}});
