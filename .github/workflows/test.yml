@@ -26,3 +26,4 @@ jobs:
       - run: node tests/polish.cjs
       - run: node tests/fun.cjs
       - run: node tests/hook.cjs
+      - run: node tests/joy.cjs

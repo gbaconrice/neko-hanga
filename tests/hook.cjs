@@ -121,6 +121,7 @@ async function main(){
  // 2回目はない。
  await page.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.map(x=>x+3)});await page.click('#bPrint');
  await page.waitForFunction(()=>!window.__pz.state().running);
+ await page.clock.runFor(5000);
  assert.equal(await page.locator('#oCompare').textContent(),'','no comparison on the first game');
  const first=(await st()).score;
  assert.equal(await page.evaluate(()=>window.scoreMessages.length),1);
@@ -134,6 +135,7 @@ async function main(){
  await page.clock.runFor(5600);
  await page.waitForFunction(()=>!window.__pz.state().running);
  const second=(await st()).score;
+ await page.clock.runFor(5000); // 集計が終わると、前回との比較が出る
  const cmp=await page.locator('#oCompare').textContent();
  assert(cmp.includes('前回より')&&cmp.includes('ベストまであと'+(first-second)+'点'),'comparison with the previous game '+cmp);
  assert.equal((await st()).sessionBest,first);
