@@ -553,7 +553,13 @@ function $(id){return document.getElementById(id)}
 function rnd(n){return Math.floor(Math.random()*n)}
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=rnd(i+1),t=a[i];a[i]=a[j];a[j]=t}return a}
 function fgFor(hex){var r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);return (r*.299+g*.587+b*.114)>150?'#23262d':'#fff'}
-function show(id){['title','game','over'].forEach(function(s){$(s).classList.toggle('on',s===id)})}
+// 画面や紙が替わった直後は、前の画面への連打が同じ場所のボタンに当たらないよう、短い間だけ押せない。
+// その間に押されたら待ち時間を延ばすので、連打が止まるまで反応しない。完成図の早送りには掛けない。
+// つまみは、画面が替わった直後だけ受け付けない(紙が替わった直後はすぐ回せる)
+var TAP_GUARD_MS=400,guardUntil=0,screenUntil=0;
+function tapHold(){guardUntil=performance.now()+TAP_GUARD_MS}
+function tapHeld(){if(performance.now()>=guardUntil)return false;tapHold();return true}
+function show(id){var was=$(id).classList.contains('on');['title','game','over'].forEach(function(s){$(s).classList.toggle('on',s===id)});if(!was){tapHold();screenUntil=guardUntil}} // 起動時など、画面が替わらないときは待たせない
 function variant(mi,n,sp){
   if(sp===undefined)sp=n>=3&&rnd(RARE_ONE_IN)===0?1+rnd(SP.length):0;
   return {mi:mi,sp:sp,flip:rnd(2)};
@@ -920,7 +926,7 @@ function orderStep(frac,va,neat){
 }
 function orderMiss(){if(order&&order.k==='streak')order.p=0;if(!hintOn)showHint(null)}
 function useHelp(){
-  if(!running||busy||!cur||helps<=0)return;au();
+  if(!running||busy||!cur||helps<=0||tapHeld())return;au();
   var c=[];cur.v.forEach(function(v,j){if(v!==cur.sol[j])c.push(j)});
   if(!c.length)return;
   var j=c[rnd(c.length)],cell=dials[j].parentNode;
@@ -951,10 +957,10 @@ function bindKnob(cell,j){
   var st=null,spin=null,dial=cell.firstChild;
   function ok(){return running&&!busy&&cur&&cell.isConnected}
   cell.addEventListener('pointerdown',function(e){
-    if(!ok())return;e.preventDefault();try{cell.setPointerCapture(e.pointerId)}catch(_){}
+    if(!ok()||performance.now()<screenUntil)return;e.preventDefault();try{cell.setPointerCapture(e.pointerId)}catch(_){}
     au();var r=dial.getBoundingClientRect();
     spin=null; // 回っている途中で触ったら止める
-    st={cx:r.left+r.width/2,cy:r.top+r.height/2,a:null,acc:0,base:cur.v[j],moved:false,log:[]};
+    st={id:e.pointerId,cx:r.left+r.width/2,cy:r.top+r.height/2,a:null,acc:0,base:cur.v[j],moved:false,log:[]};
     dial.classList.remove('ease');
     // 触っている間は、このつまみで動く版をはっきり、動かない版を少し薄く見せる
     focus=[0,0,0];cur.ax.forEach(function(a,i){if(i===j||cur.M[i][j])focus[a.p]=1});
@@ -962,7 +968,8 @@ function bindKnob(cell,j){
     draw();
   });
   cell.addEventListener('pointermove',function(e){
-    if(!st)return;if(!ok()){st=null;return}
+    if(!st||e.pointerId!==st.id)return; // 同じつまみに2本目の指が乗っても、あとから触れた指だけを追う
+    if(!ok()){drop();return}
     var dx=e.clientX-st.cx,dy=e.clientY-st.cy;
     if(dx*dx+dy*dy<144){st.a=null;return}
     var a=Math.atan2(dy,dx)*180/Math.PI;
@@ -991,14 +998,19 @@ function bindKnob(cell,j){
     });
     return true;
   }
+  // 指を離したとき・操作が途中で切れたとき: 薄くした版を戻し、つまみを目盛りの位置へ戻す(刷り損じの間でも残さない)
+  function drop(){
+    st=null;focus=null;
+    if(cell.isConnected&&cur&&cur.v[j]!==undefined){dial.classList.add('ease');snap(j)}
+    if(cur&&running&&!revealing)draw();
+  }
   function up(e){
-    if(!st)return;
-    focus=null;
+    if(!st||e.pointerId!==st.id)return;
     if(ok()){
       if(!st.moved&&e.type==='pointerup')setV(j,cur.v[j]+(e.clientX<st.cx?-1:1));
-      if(!(st.moved&&e.type==='pointerup'&&fling(performance.now()))){dial.classList.add('ease');snap(j)}
+      if(st.moved&&e.type==='pointerup'&&fling(performance.now())){st=null;focus=null;if(cur&&running&&!revealing)draw();return}
     }
-    st=null;if(cur&&running&&!revealing)draw();
+    drop();
   }
   cell.addEventListener('pointerup',up);
   cell.addEventListener('pointercancel',up);
@@ -1031,7 +1043,7 @@ function newSheet(){
   var ce=$('carry');ce.classList.remove('show');
   if(lastCarry>0){ce.textContent='+'+lastCarry.toFixed(1)+'秒';void ce.offsetWidth;ce.classList.add('show')}
   else ce.textContent=''; // 持ち越しがない紙では、前の表示を読み上げ領域に残さない
-  lowSec=0;$('tbar').parentNode.classList.remove('low');$('tbar').style.transform='scaleX(1)';busy=false;draw();anim('pin',240);
+  lowSec=0;$('tbar').parentNode.classList.remove('low');$('tbar').style.transform='scaleX(1)';busy=false;tapHold();draw();anim('pin',240);
   }).catch(function(){if(!running||request!==sheetRequest)return;busy=false;toast('絵を読み込めませんでした','ng')});
 }
 function toast(msg,cls,big){
@@ -1084,7 +1096,7 @@ function nextSheet(){
 function trySkip(){if(running&&skipReveal&&performance.now()-revealStarted>=Math.max(SKIP_AFTER_MS,reducedMotion?0:rollMs)){stopMeows();skipReveal()}}
 function onPrint(){
   if(running&&busy&&skipReveal){trySkip();return}
-  if(!running||busy||!artReady)return;au();
+  if(!running||busy||!artReady||tapHeld())return;au();
   if(waitTouch){waitTouch=false;var tp=document.querySelector('.tip');if(tp)tp.parentNode.removeChild(tp)}
   var ok=offs().every(function(o){return o===0});
   if(ok){
@@ -1307,9 +1319,9 @@ function preventKnobZoom(e){if(e.cancelable)e.preventDefault()}
 $('knobs').addEventListener('touchstart',preventKnobZoom,{passive:false});
 $('knobs').addEventListener('touchend',preventKnobZoom,{passive:false});
 $('app').addEventListener('pointerdown',unlockSound,{capture:true});
-$('bStart').addEventListener('click',start);
-$('bRetry').addEventListener('click',start);
-$('bHome').addEventListener('click',home);
+$('bStart').addEventListener('click',function(){if(!tapHeld())start()});
+$('bRetry').addEventListener('click',function(){if(!tapHeld())start()});
+$('bHome').addEventListener('click',function(){if(!tapHeld())home()});
 $('bPrint').addEventListener('click',onPrint);
 $('bHelp').addEventListener('click',useHelp);
 paper.addEventListener('pointerdown',trySkip);
@@ -1366,7 +1378,7 @@ try{if(new URLSearchParams(location.search).get('check'))openCheck()}catch(e){}
 // 起動時だけ、題字を左から1文字ずつ出し、最後に肉球の判子を押す
 $('logo').classList.add('play');
 // 動作確認用(?debug=1 のときだけ有効)
-try{if(new URLSearchParams(location.search).get('debug'))window.__pz={loadWork:loadWork,compose:compose,catFrame:catFrame,bookTurn:bookTurn,works:function(){return works},animationImages:animationImages,frame:function(v,css,phase){var c=document.createElement('canvas');c.width=c.height=css;compose(c.getContext('2d'),css,makePlates(v,css,false),null,v,false,phase);return c},thumb:thumb,plain:plain,variant:variant,W:W,cur:function(){return cur},state:function(){return {reducedMotion:!!reducedMotion,prints:prints,lives:lives,running:running,busy:busy,streak:streak,meows:meowBuffer?1:0,audioState:audioState,audioPlayed:audioPlayed,activeVoices:activeMeows.length,audioContext:ac?ac.state:'unsupported',audioError:audioError,artReady:artReady,decodedWorks:workCache.size,bookIndex:bookIndex,revealing:revealing,score:score,helps:helps,order:order,ordDone:ordDone,canSkip:!!skipReveal,revealAge:revealing?performance.now()-revealStarted:-1,rollMs:rollMs,prePlates:!!prePlates,comeback:comeback,spinning:spinning,tally:tally,tallyDone:tallyDone,lastMode:lastMode,lastUsed:lastUsed,fever:fever,feverGauge:feverGauge,lastTick:lastTick,sessionBest:sessionBest,spHide:cur&&cur.va.spHide||0,roll:rollAt(),carry:carry,lastCarry:lastCarry,baseTime:cur?tMax-lastCarry:0,music:music.on,musicNotes:music.notes,tMax:tMax,tLeft:tLeft,moves:cur?cur.moves:0,minMoves:cur?cur.min:0,waitTouch:waitTouch,hero:hero?hero.va.mi:-1,focus:focus}},setLives:function(n,keepLast){lives=n;if(!keepLast)lastUsed=true}/* 終了を確かめるテスト用: 既定でラストチャンスを使用済みにする */,forceSp:function(k){forcedSp=k},rareOff:function(v){rareOff=v},setPrints:function(n){prints=n}}}catch(e){}
+try{if(new URLSearchParams(location.search).get('debug'))window.__pz={loadWork:loadWork,compose:compose,catFrame:catFrame,bookTurn:bookTurn,works:function(){return works},animationImages:animationImages,frame:function(v,css,phase){var c=document.createElement('canvas');c.width=c.height=css;compose(c.getContext('2d'),css,makePlates(v,css,false),null,v,false,phase);return c},thumb:thumb,plain:plain,variant:variant,W:W,cur:function(){return cur},state:function(){return {reducedMotion:!!reducedMotion,prints:prints,lives:lives,running:running,busy:busy,streak:streak,meows:meowBuffer?1:0,audioState:audioState,audioPlayed:audioPlayed,activeVoices:activeMeows.length,audioContext:ac?ac.state:'unsupported',audioError:audioError,artReady:artReady,decodedWorks:workCache.size,bookIndex:bookIndex,revealing:revealing,score:score,helps:helps,order:order,ordDone:ordDone,canSkip:!!skipReveal,revealAge:revealing?performance.now()-revealStarted:-1,rollMs:rollMs,prePlates:!!prePlates,comeback:comeback,spinning:spinning,tally:tally,tallyDone:tallyDone,lastMode:lastMode,lastUsed:lastUsed,fever:fever,feverGauge:feverGauge,lastTick:lastTick,sessionBest:sessionBest,spHide:cur&&cur.va.spHide||0,roll:rollAt(),carry:carry,lastCarry:lastCarry,baseTime:cur?tMax-lastCarry:0,music:music.on,musicNotes:music.notes,tMax:tMax,tLeft:tLeft,moves:cur?cur.moves:0,minMoves:cur?cur.min:0,waitTouch:waitTouch,hero:hero?hero.va.mi:-1,focus:focus,guarded:performance.now()<guardUntil}},setLives:function(n,keepLast){lives=n;if(!keepLast)lastUsed=true}/* 終了を確かめるテスト用: 既定でラストチャンスを使用済みにする */,forceSp:function(k){forcedSp=k},rareOff:function(v){rareOff=v},tapGuard:function(ms){TAP_GUARD_MS=ms;guardUntil=screenUntil=0}/* 連打の受け流しを切る(受け流し以外を確かめるテスト用) */,setPrints:function(n){prints=n}}}catch(e){}
 })();
 </script>
 </body>

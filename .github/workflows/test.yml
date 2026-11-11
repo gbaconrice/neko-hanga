@@ -27,3 +27,4 @@ jobs:
       - run: node tests/fun.cjs
       - run: node tests/hook.cjs
       - run: node tests/joy.cjs
+      - run: node tests/qa.cjs
