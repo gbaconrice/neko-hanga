@@ -31,23 +31,23 @@ async function main(){
 
  // 次の称号まで: あと何枚かを出し、届いたら昇格を知らせる。
  assert.equal(await page.locator('#sheetNo').textContent(),'印刷工まで3枚');
- // 判定: 残り時間で 神速・はやい・ぴったり。判子と見どころに出る。
+ // 判定: 残り時間で めろめろ・うっとり・ごろごろ。判子と見どころに出る。
  await align();await page.click('#bPrint');
- assert.equal((await note()).split('　')[0],'神速！');
- await page.clock.runFor(340);assert.equal(await page.locator('#paper .judge.g2').textContent(),'神速');
- assert((await lastWork()).tags.includes('神速'));assert((await lastWork()).thumb,'a small copy is kept for the result stack');
+ assert.equal((await note()).split('　')[0],'めろめろ！');
+ await page.clock.runFor(340);assert.equal(await page.locator('#paper .judge.g2').textContent(),'めろめろ');
+ assert((await lastWork()).tags.includes('めろめろ'));assert((await lastWork()).thumb,'a small copy is kept for the result stack');
  await idle();assert.equal(await page.locator('#paper .judge').count(),0,'the stamp leaves with the sheet');
  assert.equal(await page.locator('#sheetNo').textContent(),'印刷工まで2枚');
  await spend(.65);await align();await page.click('#bPrint');
- assert.equal((await note()).split('　')[0],'はやい！');await page.clock.runFor(340);assert.equal(await page.locator('#paper .judge.g1').count(),1);
+ assert.equal((await note()).split('　')[0],'うっとり！');await page.clock.runFor(340);assert.equal(await page.locator('#paper .judge.g1').count(),1);
  await idle();
  await spend(.3);await align();await page.click('#bPrint');
- const n3=await note();assert.equal(n3.split('　')[0],'ぴったり！');assert(n3.includes('印刷工に昇格！'),'rank-up is announced '+n3);
+ const n3=await note();assert.equal(n3.split('　')[0],'ごろごろ！');assert(n3.includes('印刷工に昇格！'),'rank-up is announced '+n3);
  await page.clock.runFor(340);assert.equal(await page.locator('#paper .judge.g0').count(),1);
- assert(!(await lastWork()).tags.some(t=>t==='はやい'||t==='神速'));
+ assert(!(await lastWork()).tags.some(t=>t==='うっとり'||t==='めろめろ'));
  await idle();assert.equal(await page.locator('#sheetNo').textContent(),'刷り師まで4枚');
 
- // 連続の取り返し: 3連続のあとミス。「はやい」以上で刷ると4連続に戻る。
+ // 連続の取り返し: 3連続のあとミス。「うっとり」以上で刷ると4連続に戻る。
  let s=await st();assert.equal(s.streak,3);
  await page.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.map(x=>x+3)});await page.click('#bPrint');
  s=await st();assert.equal(s.streak,0);assert.equal(s.comeback,3);
@@ -90,7 +90,7 @@ async function main(){
  // 小さい画面: いちばん長い称号の表示がスコアに重ならず、判子が紙の中に収まる。
  await page.setViewportSize({width:320,height:568});await page.waitForTimeout(100);
  const fit=await page.evaluate(()=>{const e=document.querySelector('#sheetNo');e.textContent='国宝まで10枚';const r=e.getBoundingClientRect(),m=document.querySelector('.hud .count').getBoundingClientRect();
-  const p=document.querySelector('#paper'),j=document.createElement('i');j.className='judge g2';j.textContent='ぴったり';j.style.animation='none';p.appendChild(j);const a=j.getBoundingClientRect(),b=p.getBoundingClientRect();j.remove();
+  const p=document.querySelector('#paper'),j=document.createElement('i');j.className='judge g2';j.textContent='めろめろ';j.style.animation='none';p.appendChild(j);const a=j.getBoundingClientRect(),b=p.getBoundingClientRect();j.remove();
   return {right:r.right,score:m.left,jw:a.width,in:a.left>=b.left&&a.right<=b.right+1&&a.top>=b.top-1,clip:j.scrollWidth>j.clientWidth+1}});
  assert(fit.right<=fit.score,'the rank goal does not touch the score '+JSON.stringify(fit));assert(fit.in&&!fit.clip&&fit.jw>=28,'the stamp fits the paper and its text fits the stamp '+JSON.stringify(fit));
  await page.close();
