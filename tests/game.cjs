@@ -15,7 +15,7 @@ async function main(){
  await page.route('https://cdn.gravity.place/**',r=>r.fulfill({contentType:'text/javascript',body:'window.AgentSDK={user:{getMyUserInfo:()=>Promise.resolve({data:{name:"テスト刷り師"}})}};'}));
  await page.clock.install();
  await page.goto('http://127.0.0.1:4173/?debug=1&top=98');
- await page.waitForFunction(()=>window.__pz?.state().artReady);
+ await page.waitForFunction(()=>window.__pz?.state().artReady);await page.evaluate(()=>window.__pz.tapGuard(0));
  assert.equal(await page.locator('#who').textContent(),'テスト刷り師');
  assert.equal(await page.locator('#bGal,#gal,#det').count(),0);
  const total=JSON.parse(fs.readFileSync(path.join(root,'art/catalog.json'),'utf8')).length;

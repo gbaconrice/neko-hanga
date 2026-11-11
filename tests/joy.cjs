@@ -12,7 +12,7 @@ async function main(){
   await page.route('https://cdn.gravity.place/**',r=>r.fulfill({contentType:'text/javascript',body:SDK}));
   if(clock)await page.clock.install();
   await page.goto('http://127.0.0.1:4173/?debug=1&top=98');
-  await page.waitForFunction(()=>window.__pz?.state().artReady);
+  await page.waitForFunction(()=>window.__pz?.state().artReady);await page.evaluate(()=>window.__pz.tapGuard(0));
   await page.evaluate(()=>window.__pz.rareOff(true));
   return page;
  }

@@ -15,7 +15,7 @@ async function main(){
   await page.route('https://gbaconrice.github.io/neko-hanga/index.html',r=>r.fulfill({contentType:'text/html; charset=utf-8',headers:{'access-control-allow-origin':'*'},body:fs.readFileSync(path.join(root,'index.html'))}));
   await page.clock.install();
   await page.goto(url);
-  await page.waitForFunction(()=>window.__pz?.state().artReady);
+  await page.waitForFunction(()=>window.__pz?.state().artReady);await page.evaluate(()=>window.__pz.tapGuard(0));
   return page;
  }
  const st=page=>page.evaluate(()=>window.__pz.state());
