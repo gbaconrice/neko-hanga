@@ -8,7 +8,7 @@ const {chromium}=require('playwright');
   await p.route('https://cdn.gravity.place/**',r=>r.abort());
   await p.goto('http://127.0.0.1:4173/?debug=1');
   await p.waitForFunction(()=>window.__pz?.state().artReady);
-  await p.tap('#bStart');await p.waitForTimeout(300);
+  await p.tap('#bStart');await p.waitForTimeout(600); // 画面が替わった直後の0.4秒は、つまみも受け付けない(連打対策)。それが明けてから操作する
   const cell=p.locator('.kn').first(),dial=cell.locator('.dial');
   const box=await dial.boundingBox(),cx=box.x+box.width/2,cy=box.y+box.height/2,r=box.width*.36;
   const initial=await p.evaluate(()=>({v:window.__pz.cur().v[0],scale:visualViewport.scale}));
