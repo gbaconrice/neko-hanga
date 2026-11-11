@@ -66,6 +66,7 @@ assert.equal((await st()).prePlates,false,'and stay released on the next sheet')
  assert.equal(await page.locator('#carry').textContent(),'','no stale carried-time text');assert.equal(await page.locator('#carry.show').count(),0);
 assert(!(await page.locator('#paper').evaluate(e=>e.classList.contains('gone'))),'the next sheet is visible');await page.waitForFunction(()=>getComputedStyle(document.querySelector('#paper')).opacity==='1');
  // 結果画面には音ボタンがないので、BGMは止まる。
+ await page.evaluate(()=>window.__pz.setLives(1)); // ラストチャンスを使用済みにして終える(ラストチャンスは tests/hook.cjs)
  await page.click('#bPrint');await page.waitForFunction(()=>!window.__pz.state().running);
  assert(!(await st()).music,'the result screen is quiet');
  // 回帰: 狭い画面で★特色の札が出ても、札は1行のまま折り返して並び、画面からはみ出さない。
