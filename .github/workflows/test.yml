@@ -13,7 +13,8 @@ jobs:
         with:
           node-version: 20
       - run: npm install --no-save playwright sharp
-      - run: npx playwright install --with-deps chromium
+      # 追加部品の取得先(apt)に接続できないことがある。そのときはブラウザだけ入れて続ける
+      - run: npx playwright install --with-deps chromium || npx playwright install chromium
       - run: sudo mkdir -p /workspace/scratch && sudo chown -R "$USER" /workspace
       - name: Serve the game
         run: python3 -m http.server 4173 >/dev/null 2>&1 &
