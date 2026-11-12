@@ -403,6 +403,13 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
 @media(max-height:690px){.hud{height:52px}.count b{font-size:26px}#hint{height:20px;font-size:12px}.bar{margin:2px 0 3px}#logo{font-size:38px}#stamp{width:30px;height:30px;right:-30px}.how{font-size:12px;line-height:1.55}#over .head .num{font-size:36px}}
 @media(prefers-reduced-motion:reduce){#lives.last .paw:not(.spent){animation:none}}
 @media(prefers-reduced-motion:reduce){#logo.play span,#logo.play #stamp,#combo.up,#bookSheet.turnNext #bookPage,#bookSheet.turnPrev #bookPage{animation:none}}
+/* 結果の絵本: 枚数と得点は折り返さない。見どころが入りきらないときは次の行へ送り、それでも長ければ末尾を省く */
+#bookFoot .meta{flex-wrap:wrap;gap:0 10px}
+#bookCount,#bookPts{flex:none;white-space:nowrap}
+#bookTags{min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 加点の知らせ: 項目が多いときは画面の外へはみ出さず、項目の切れ目で折り返す */
+#toast{width:max-content}
+#toast span{white-space:normal;word-break:keep-all;text-align:center}
 </style>
 </head>
 <body>
@@ -1123,6 +1130,8 @@ function onPrint(){
     if(revive)lives=1;
     else if(streak%HEAL_EVERY===0&&lives<LIVES){lives++;heal=true}
     hud();
+    // 注文の進み具合は刷った時点で出す(次の紙まで古い数のままにしない)。復活したら、ラストチャンスの案内は消す
+    if(revive)hintOn=false;if(!hintOn)showHint(null);
     // ★特色はローラーが金色に光り、ゆっくり通る。フィーバー中は虹色
     rollMs=va.sp?Math.round(ROLL_MS*1.7):ROLL_MS;
     revealing=true;revealStarted=performance.now();prePlates=plates;plates=makePlates(va,cv.width,false);
@@ -1191,7 +1200,7 @@ function gameOver(){
   var cmp='';
   if(lastRunScore>=0){
     var d=score-lastRunScore,dt=d>0?'前回より +'+d+'点':d<0?'前回より −'+(-d)+'点':'前回と同じ点';
-    cmp=score>sessionBest?'ベスト更新！　'+dt:dt+'　ベストまであと'+(sessionBest-score)+'点';
+    cmp=score>sessionBest?'ベスト更新！　'+dt:score<sessionBest?dt+'　ベストまであと'+(sessionBest-score)+'点':dt; // ベストと同点のときは「あと0点」を出さない
   }
   lastRunScore=score;sessionBest=Math.max(sessionBest,score);comeback=0;
   lastMode=false;fever=0;$('game').classList.remove('lastMode');$('lastBanner').hidden=true;paper.classList.remove('fever');
