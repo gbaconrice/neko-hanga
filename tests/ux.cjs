@@ -58,13 +58,13 @@ async function main(){
   await run(2000);await idle();
   // 従来の下限(32/34/29/20秒)を割らず、重い紙は最速の操作の倍率+4秒まで延びる(詳しくは tests/timing.cjs)
   const base=async(old,fit,msg)=>{const s=await st();assert(s.baseTime>=old-1e-9,msg+' never below the old limit '+s.baseTime);assert(Math.abs(s.baseTime-Math.max(old,fit*s.best+4))<1e-6,msg+' '+s.baseTime+' best '+s.best)};
-  await base(32,3,'16th sheet (two rotations and a link)'+tag);
+  await base(32,2.4,'16th sheet (two rotations and a link)'+tag);
   await page.evaluate(()=>window.__pz.setPrints(23));await good();await idle();
-  await base(34,3,'25th sheet (scale knob)'+tag);
+  await base(34,2.4,'25th sheet (scale knob)'+tag);
   await page.evaluate(()=>window.__pz.setPrints(29));await good();await idle();
-  await base(29,3,'31st sheet');
+  await base(29,2.4,'31st sheet');
   await page.evaluate(()=>window.__pz.setPrints(59));await good();await idle();
-  await base(20,2.2,'60th sheet: 2.2x the fastest play');
+  await base(20,2,'60th sheet: 2x the fastest play');
   await page.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});await page.click('#bPrint');await run(1000);
   await run(2000);await end();
   // 結果: 注文の札と、注文・むだなしの集計行はない。内訳の合計は得点と同じ

@@ -27,7 +27,7 @@ function sheet(c){
 var OP_LOOK=1.2,OP_KNOB={x:.9,y:.9,r:1.3,s:1.5},OP_STEP=.15,OP_LINK=1.5,OP_PRINT=.4;
 var GRADE_FIT=[[2.0,1.0],[1.3,.5]],GRADE_FIT_TIER=2;
 var TIME_PAD=4;
-function TIME_FIT(n){return n<35?3:Math.max(2.2,3-(n-35)*.8/25)}
+function TIME_FIT(n){return n<35?2.4:Math.max(2,2.4-(n-35)*.4/25)}
 function bestTime(c){
   var t=OP_LOOK+OP_PRINT,i,j;
   for(j=0;j<c.ax.length;j++)t+=OP_KNOB[c.ax[j].t]+Math.abs(c.sol[j])*OP_STEP;
