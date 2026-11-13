@@ -31,3 +31,4 @@ jobs:
       - run: node tests/qa.cjs
       - run: node tests/ux.cjs
       - run: node tests/timing.cjs
+      - run: node scripts/playtest/build.cjs && node tests/playtest.cjs
