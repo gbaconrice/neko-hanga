@@ -5,7 +5,8 @@
 // - 制限時間・締め切り・判定・得点・フィーバー・持ち越し・回復・取り返しの式も、該当の文を抜き出して評価する。
 //   分岐(時間切れ/ミス/ラストチャンス/復活)の流れだけは手で写した(下の playRun を参照)。
 // - プレイヤーは「モデル」: 完了時間 T = k × bestTime × 対数正規ノイズ、ミス確率 p_miss。人のデータではない。
-// 使い方: node scripts/measure/sim.cjs   (オプション: --seeds 2000 --runs 2000 --quick)
+// 使い方: node scripts/measure/sim.cjs   (オプション: --seeds 2000 --runs 2000 --quick --cap 120)
+//   調整案の試算: --variant <TIME_FITの式ファイル> で、新ルールの TIME_FIT だけを差し替えて通しのプレイを測る(ファイルは書き出さない)
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm'), cp = require('child_process');
 
@@ -16,7 +17,8 @@ function arg(name, def) { const i = args.indexOf('--' + name); return i >= 0 ? +
 const QUICK = args.includes('--quick');
 const SEEDS = arg('seeds', QUICK ? 300 : 2000);   // 1枚ごとの集計: n ごとの紙の数
 const RUNS = arg('runs', QUICK ? 300 : 2000);     // 通しの集計: k ごとのプレイ数
-const CAP = 120;
+const CAP = arg('cap', 120);
+const VARIANT = (()=>{const i=args.indexOf('--variant');return i>=0?args[i+1]:null})();
 const NS = [6, 7, 11, 12, 17, 18, 24, 25, 26, 30, 35, 44, 45, 59, 60];
 const KS = [[0.7, '速い'], [1.0, '基準'], [1.4, '遅い'], [2.0, 'とても遅い']];
 const SIGMAS = [0.25, 0.4];
@@ -236,7 +238,8 @@ function runStats(G, Gp, k, sigma, base) {
 
 // ---------------- 実行 ----------------
 const t0 = Date.now();
-const srcNew = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+let srcNew = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+if (VARIANT) { const body = fs.readFileSync(VARIANT, 'utf8').trim(); const re = /function TIME_FIT\(n\)\{[^\n]*\}/; if (!re.test(srcNew)) throw new Error('TIME_FIT not found'); srcNew = srcNew.replace(re, body); console.log('variant TIME_FIT:', body); }
 const srcOld = cp.execSync('git show ' + OLD_REF + ':index.html', { cwd: ROOT, maxBuffer: 1 << 26 }).toString('utf8');
 const headRef = cp.execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim();
 const exNew = extract(srcNew, 'index.html@' + headRef), exOld = extract(srcOld, 'index.html@' + OLD_REF);
@@ -312,7 +315,7 @@ md += '\n| σ | k | 得点中央 新/旧 | 得点平均 新/旧 |\n|---|---|---|
 for (const r of runs) md += `| ${r.sigma} | ${r.k} | ${f2(r.ratioMedScore)} | ${f2(r.ratioMeanScore)} |\n`;
 md += '\n## 感度（OP_* を1つずつ ±30%、人は元の定数で k=1.0, σ=0.25。右2列だけ k=2.0）\n\n| 変更 | ' + SENS_NS.map(n => 'めろめろ ' + lab(n)).join(' | ') + ' | ' + SENS_NS.map(n => '時間切れ ' + lab(n)).join(' | ') + ' | 枚数 中央 | 枚数 p90 | 上限到達 | k=2.0 枚数 中央 | k=2.0 枚数 p90 |\n|' + '---|'.repeat(6 + SENS_NS.length * 2) + '\n';
 for (const s of sens) md += `| ${s.variant} | ${SENS_NS.map(n => pc(s.mero[n])).join(' | ')} | ${SENS_NS.map(n => pc(s.timeout[n])).join(' | ')} | ${s.medSheets} | ${s.p90Sheets} | ${pc(s.capShare)} | ${s.k2.medSheets} | ${s.k2.p90Sheets} |\n`;
-if (!QUICK) {
+if (!QUICK && !VARIANT) {
   fs.writeFileSync(path.join(OUT, 'sim-tables.md'), md);
   fs.writeFileSync(path.join(OUT, 'sim-results.json'), JSON.stringify(result, null, 1));
 }
