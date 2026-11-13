@@ -46,6 +46,7 @@ node tests/hook.cjs
 node tests/joy.cjs
 node tests/qa.cjs
 node tests/ux.cjs
+node tests/timing.cjs
 ```
 
 画像検証では153場面×6コマと、猫のシルエット外の全画素が不変であることを確認します。ブラウザ検証はChromium。iOS Safari・GRAVITY実機の音声やランキング受理は未確認です。

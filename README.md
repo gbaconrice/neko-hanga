@@ -46,7 +46,7 @@
 
 文字は丸ゴシック（Zen Maru Gothic、SIL OFL 1.1）を、使う文字だけ切り出して埋め込んでいます。著作権表記とライセンス全文は `fonts/OFL.txt` にあり、`index.html` にも同じ文をコメントとして入れています（詳細は `fonts/README.md`）。文言や作品名を変えたら、素材の埋め込みのあとに `python3 scripts/build-font.py` を実行してください（`pip install fonttools brotli` が必要）。
 
-検証は `node tests/animation.cjs`、`node tests/game.cjs`、`node tests/touch.cjs`、`node tests/finish.cjs`、`node tests/polish.cjs`、`node tests/fun.cjs`、`node tests/hook.cjs`、`node tests/joy.cjs`、`node tests/qa.cjs`、`node tests/ux.cjs`。Chromiumは `CHROMIUM_PATH`、`/usr/bin/chromium`、Playwright付属のものの順で使用します。
+検証は `node tests/animation.cjs`、`node tests/game.cjs`、`node tests/touch.cjs`、`node tests/finish.cjs`、`node tests/polish.cjs`、`node tests/fun.cjs`、`node tests/hook.cjs`、`node tests/joy.cjs`、`node tests/qa.cjs`、`node tests/ux.cjs`、`node tests/timing.cjs`。Chromiumは `CHROMIUM_PATH`、`/usr/bin/chromium`、Playwright付属のものの順で使用します。
 
 ## 素材待ちの未完
 
