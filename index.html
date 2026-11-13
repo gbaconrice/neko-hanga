@@ -146,8 +146,8 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
 .ib.off{color:#6b7280;text-decoration:line-through}
 .bar{height:8px;border-radius:4px;background:#3a3f4a;overflow:hidden;margin:4px 0 6px;flex:none;position:relative}
 .bar::before,.bar::after{content:'';position:absolute;top:0;bottom:0;width:2px;background:#23262d;z-index:1}
-.bar::before{left:50%}
-.bar::after{left:70%}
+.bar::before{left:var(--gu,55%)} /* うっとりの境目(残り時間の位置)。紙ごとに newSheet で決める */
+.bar::after{left:var(--gm,80%)} /* めろめろの境目 */
 .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd23f,#ff5d73);transform-origin:left center}
 .stage{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center;touch-action:none}
 .paper{background:var(--paper);box-shadow:0 6px 18px rgba(0,0,0,.45);border-radius:2px}
@@ -485,7 +485,7 @@ var HEAL_EVERY=5;       // 何枚連続成功でライフ回復するか
 var RARE_ONE_IN=7;      // 特色刷りが出る割合(1/N)
 // 得点: (基本 + 段階×TIER_PT + 残り時間の割合×TIME_PT) × 連続倍率 + 特色・記念のボーナス
 var BASE_PT=100,TIER_PT=20,TIME_PT=100,MULT_STEP=.1,MULT_MAX=1.5,SP_PT=200;
-var GRADES=[['ごろごろ',0],['うっとり',.55],['めろめろ',.8]]; // 判定の名前(刷った絵を見た猫の気持ち)と、必要な残り時間の割合
+var GRADES=[['ごろごろ',0],['うっとり',.55],['めろめろ',.8]]; // 判定の名前(刷った絵を見た猫の気持ち)と、必要な残り時間の割合(軽い紙での基準。重い紙は GRADE_FIT で広げる)
 var SPIN_MIN=.35,SPIN_MAX=1.5,SPIN_TAU=160; // つまみを弾いたときの勢い: 効き始める速さ・上限(度/ミリ秒)、減速の時定数(ミリ秒)
 var TALLY_STEP_MS=420,STACK_MAX=16; // 結果の集計の1行の時間 / 積み上げて見せる枚数の上限
 var LAST_TIME=5,LAST_BANNER_MS=1100; // ラストチャンスの制限時間(秒) / 予告を見せる時間
@@ -499,6 +499,23 @@ var MILESTONE=10,MILESTONE_PT=300; // 何枚ごとに記念の加点をするか
 // つまみが6つになる後半は下限を上げてあり、最後の段階だけ少しずつ TIME_MIN 秒まで下がる(ゲームが終わらなくなるのを防ぐ)
 var TIME_START=46,TIME_STEP=1.1,TIME_MIN=20;
 function sheetTime(c,n){return n<3?c.time:Math.max(c.min||TIME_MIN,Math.min(c.time,TIME_START-n*TIME_STEP))}
+// 最速の操作の見積もり(タッチで、迷わず最短で合わせたときの秒数)。後半の紙でも、上手な人がめろめろに届くようにするための基準
+// OP_LOOK: 紙を見て把握する / OP_KNOB: つまみ1つに手を伸ばして合ったか見る(回転・大きさは見極めにくい)
+// OP_STEP: 1目盛りごと / OP_LINK: 連動で他の版が動いた分を合わせ直す(連動1つごと) / OP_PRINT: 刷るボタン
+var OP_LOOK=1.2,OP_KNOB={x:.9,y:.9,r:1.3,s:1.5},OP_STEP=.15,OP_LINK=1.5,OP_PRINT=.4;
+// 判定の締め切り(紙を出してからの経過秒) = 倍率×最速 + 余裕。[うっとり, めろめろ]。従来の割合より短くはしない
+var GRADE_FIT=[[2.0,1.0],[1.3,.5]];
+// 広げるのは回転つまみが出る段階(tier 2)から。それより前は従来の割合でも最速で届くので、序盤はやさしくしない
+var GRADE_FIT_TIER=2;
+// 制限時間の下限 = TIME_FIT(n)×最速 + TIME_PAD。35枚までは2.4倍、60枚で2倍まで少しずつ厳しくする(2倍+4秒でも、うっとりの締め切り2倍+1秒より長いので、ごろごろは残る)
+var TIME_PAD=4;
+function TIME_FIT(n){return n<35?2.4:Math.max(2,2.4-(n-35)*.4/25)}
+function bestTime(c){
+  var t=OP_LOOK+OP_PRINT,i,j;
+  for(j=0;j<c.ax.length;j++)t+=OP_KNOB[c.ax[j].t]+Math.abs(c.sol[j])*OP_STEP;
+  for(i=0;i<c.M.length;i++)for(j=0;j<c.M.length;j++)if(i!==j&&c.M[i][j])t+=OP_LINK;
+  return t;
+}
 var HELP_START=1,HELP_MAX=3,HELP_EVERY=5; // おたすけ(1か所を自動で合わせる)の初期数と上限 / 何枚刷るごとに1つ増えるか
 // GRAVITY上部UIの回避余白(暫定値。実機で要確認)。URLに ?top=数値 で上書き可
 function topInset(){
@@ -1012,7 +1029,13 @@ function newSheet(){
   focus=null;lockState=[false,false,false];matched=false;hintFor(c);buildKnobs();fit();plates=makePlates(va,cv.width,true);
   if(waitTouch&&dials[0]){var tip=document.createElement('b');tip.className='tip';dials[0].appendChild(tip)}
   // 前の紙を早く刷った分の時間を足す
-  lastCarry=lastMode?0:carry;tMax=tLeft=lastMode?LAST_TIME:sheetTime(c,prints)+carry;carry=0;paper.classList.remove('gone');
+  lastCarry=lastMode?0:carry;cur.best=bestTime(cur);
+  // 制限時間と判定の締め切り。軽い紙は従来どおり、重い紙は操作量に合わせて延ばす(ラストチャンスは従来の割合)
+  cur.tMaxBase=lastMode?LAST_TIME:Math.max(sheetTime(c,prints),TIME_FIT(prints)*cur.best+TIME_PAD);
+  tMax=tLeft=cur.tMaxBase+(lastMode?0:carry);carry=0;
+  cur.dU=(1-GRADES[1][1])*tMax;cur.dM=(1-GRADES[2][1])*tMax;
+  if(!lastMode&&c.tier>=GRADE_FIT_TIER){cur.dU=Math.min(tMax,Math.max(cur.dU,GRADE_FIT[0][0]*cur.best+GRADE_FIT[0][1]));cur.dM=Math.min(cur.dU,Math.max(cur.dM,GRADE_FIT[1][0]*cur.best+GRADE_FIT[1][1]))}
+  var bar=$('tbar').parentNode;bar.style.setProperty('--gu',(1-cur.dU/tMax)*100+'%');bar.style.setProperty('--gm',(1-cur.dM/tMax)*100+'%');paper.classList.remove('gone');
   if(lastMode){hintOn=true;showHint('刷れたら復活。時間は'+LAST_TIME+'秒です')}
   var ce=$('carry');ce.classList.remove('show');
   if(lastCarry>0){ce.textContent='+'+lastCarry.toFixed(1)+'秒';void ce.offsetWidth;ce.classList.add('show')}
@@ -1076,9 +1099,9 @@ function onPrint(){
   if(ok){
     var va=cur.va,name='「'+W[va.mi].n+'」',heal=false,frac=Math.max(0,Math.min(1,tLeft/tMax)),revive=lastMode,fv=fever>0,feverStart=false;
     if(va.spHide){va.sp=va.spHide;delete va.spHide}
-    var grade=frac>=GRADES[2][1]?2:frac>=GRADES[1][1]?1:0,back=false,up=rank(prints+1)!==rank(prints);
+    var spent=tMax-tLeft,grade=spent<=cur.dM?2:spent<=cur.dU?1:0,back=false,up=rank(prints+1)!==rank(prints);
     prints++;streak++;
-    // 取り返し: ミスの直後に「うっとり」以上(残り時間55%以上)で刷ると、連続数が元に戻る
+    // 取り返し: ミスの直後に「うっとり」以上で刷ると、連続数が元に戻る
     if(comeback){if(grade>=1&&!revive){streak=comeback+1;back=true}comeback=0}
     if(streak>maxStreak)maxStreak=streak;works.push(va);if(va.sp)spGot++;
     var mult=Math.min(MULT_MAX,1+MULT_STEP*(streak-1));
@@ -1354,7 +1377,7 @@ try{if(new URLSearchParams(location.search).get('check'))openCheck()}catch(e){}
 // 起動時だけ、題字を左から1文字ずつ出し、最後に肉球の判子を押す
 $('logo').classList.add('play');
 // 動作確認用(?debug=1 のときだけ有効)
-try{if(new URLSearchParams(location.search).get('debug'))window.__pz={loadWork:loadWork,compose:compose,catFrame:catFrame,bookTurn:bookTurn,works:function(){return works},animationImages:animationImages,frame:function(v,css,phase){var c=document.createElement('canvas');c.width=c.height=css;compose(c.getContext('2d'),css,makePlates(v,css,false),null,v,false,phase);return c},thumb:thumb,plain:plain,variant:variant,W:W,cur:function(){return cur},state:function(){return {reducedMotion:!!reducedMotion,prints:prints,lives:lives,running:running,busy:busy,streak:streak,meows:meowBuffer?1:0,audioState:audioState,audioPlayed:audioPlayed,activeVoices:activeMeows.length,audioContext:ac?ac.state:'unsupported',audioError:audioError,artReady:artReady,decodedWorks:workCache.size,bookIndex:bookIndex,revealing:revealing,score:score,helps:helps,canSkip:!!skipReveal,revealAge:revealing?performance.now()-revealStarted:-1,rollMs:rollMs,prePlates:!!prePlates,comeback:comeback,spinning:spinning,tally:tally,tallyDone:tallyDone,lastMode:lastMode,lastUsed:lastUsed,fever:fever,feverGauge:feverGauge,lastTick:lastTick,sessionBest:sessionBest,spHide:cur&&cur.va.spHide||0,roll:rollAt(),carry:carry,lastCarry:lastCarry,baseTime:cur?tMax-lastCarry:0,music:music.on,musicNotes:music.notes,tMax:tMax,tLeft:tLeft,moves:cur?cur.moves:0,waitTouch:waitTouch,hero:hero?hero.va.mi:-1,focus:focus,guarded:performance.now()<guardUntil}},setLives:function(n,keepLast){lives=n;if(!keepLast)lastUsed=true}/* 終了を確かめるテスト用: 既定でラストチャンスを使用済みにする */,forceSp:function(k){forcedSp=k},rareOff:function(v){rareOff=v},tapGuard:function(ms){TAP_GUARD_MS=ms;guardUntil=screenUntil=0}/* 連打の受け流しを切る(受け流し以外を確かめるテスト用) */,setPrints:function(n){prints=n}}}catch(e){}
+try{if(new URLSearchParams(location.search).get('debug'))window.__pz={loadWork:loadWork,compose:compose,catFrame:catFrame,bookTurn:bookTurn,works:function(){return works},animationImages:animationImages,frame:function(v,css,phase){var c=document.createElement('canvas');c.width=c.height=css;compose(c.getContext('2d'),css,makePlates(v,css,false),null,v,false,phase);return c},thumb:thumb,plain:plain,variant:variant,W:W,cur:function(){return cur},state:function(){return {reducedMotion:!!reducedMotion,prints:prints,lives:lives,running:running,busy:busy,streak:streak,meows:meowBuffer?1:0,audioState:audioState,audioPlayed:audioPlayed,activeVoices:activeMeows.length,audioContext:ac?ac.state:'unsupported',audioError:audioError,artReady:artReady,decodedWorks:workCache.size,bookIndex:bookIndex,revealing:revealing,score:score,helps:helps,canSkip:!!skipReveal,revealAge:revealing?performance.now()-revealStarted:-1,rollMs:rollMs,prePlates:!!prePlates,comeback:comeback,spinning:spinning,tally:tally,tallyDone:tallyDone,lastMode:lastMode,lastUsed:lastUsed,fever:fever,feverGauge:feverGauge,lastTick:lastTick,sessionBest:sessionBest,spHide:cur&&cur.va.spHide||0,roll:rollAt(),carry:carry,lastCarry:lastCarry,baseTime:cur?tMax-lastCarry:0,best:cur?cur.best:0,dU:cur?cur.dU:0,dM:cur?cur.dM:0,tMaxBase:cur?cur.tMaxBase:0,music:music.on,musicNotes:music.notes,tMax:tMax,tLeft:tLeft,moves:cur?cur.moves:0,waitTouch:waitTouch,hero:hero?hero.va.mi:-1,focus:focus,guarded:performance.now()<guardUntil}},setLives:function(n,keepLast){lives=n;if(!keepLast)lastUsed=true}/* 終了を確かめるテスト用: 既定でラストチャンスを使用済みにする */,forceSp:function(k){forcedSp=k},rareOff:function(v){rareOff=v},tapGuard:function(ms){TAP_GUARD_MS=ms;guardUntil=screenUntil=0}/* 連打の受け流しを切る(受け流し以外を確かめるテスト用) */,setPrints:function(n){prints=n},bag:function(){return bag.slice()}/* まだ出ていない絵の山 */}}catch(e){}
 })();
 </script>
 </body>
