@@ -1,0 +1,154 @@
+[
+  {
+    "file": "abyssinian-origami",
+    "frames": 6,
+    "source": "atlas-59.webp",
+    "catPixels": 29192,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "apple",
+    "frames": 6,
+    "source": "atlas-13.webp",
+    "catPixels": 36386,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "bobtail-citrus",
+    "frames": 6,
+    "source": "atlas-47.webp",
+    "catPixels": 33140,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "bobtail-noses",
+    "frames": 6,
+    "source": "atlas-34.webp",
+    "catPixels": 32260,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "calico-daruma",
+    "frames": 6,
+    "source": "atlas-59.webp",
+    "catPixels": 28865,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "devon-planter",
+    "frames": 6,
+    "source": "atlas-63.webp",
+    "catPixels": 31471,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "hydrangea",
+    "frames": 6,
+    "source": "atlas-01.webp",
+    "catPixels": 35010,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "maine-snowrabbit",
+    "frames": 6,
+    "source": "atlas-62.webp",
+    "catPixels": 30498,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "munchkin-oriental-back",
+    "frames": 6,
+    "source": "atlas-55.webp",
+    "catPixels": 27344,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "norwegian-chime",
+    "frames": 6,
+    "source": "atlas-30.webp",
+    "catPixels": 28159,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "oriental-piano",
+    "frames": 6,
+    "source": "atlas-39.webp",
+    "catPixels": 20942,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "persian-norwegian-boxes",
+    "frames": 6,
+    "source": "atlas-57.webp",
+    "catPixels": 30089,
+    "front": true,
+    "floor": false
+  },
+  {
+    "file": "persian-portrait",
+    "frames": 6,
+    "source": "atlas-69.webp",
+    "catPixels": 35749,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "persian-snow",
+    "frames": 6,
+    "source": "atlas-28.webp",
+    "catPixels": 31723,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "ragdoll-roll",
+    "frames": 6,
+    "source": "atlas-23.webp",
+    "catPixels": 38455,
+    "front": false,
+    "floor": true
+  },
+  {
+    "file": "selkirk-cloud",
+    "frames": 6,
+    "source": "atlas-64.webp",
+    "catPixels": 36226,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "singapura-stool",
+    "frames": 6,
+    "source": "singapura-stool/poses.webp",
+    "catPixels": 10136,
+    "front": true,
+    "floor": true
+  },
+  {
+    "file": "tuxedo-mentor",
+    "frames": 6,
+    "source": "atlas-71.webp",
+    "catPixels": 27582,
+    "front": false,
+    "floor": false
+  },
+  {
+    "file": "window",
+    "frames": 6,
+    "source": "atlas-06.webp",
+    "catPixels": 27179,
+    "front": true,
+    "floor": false
+  }
+]

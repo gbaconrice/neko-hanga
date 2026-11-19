@@ -5,6 +5,7 @@
 - `名前.webp`：384pxの6コマを3列×2行に並べた透過スプライト。各コマの小物は同一です。
 - `masks/名前.png`：全コマの猫シルエットの和集合。猫以外の画素が変化しないことの検証に使います。
 - `sources/atlas-番号.webp`：背景側の小物、手前の小物、6枚の猫のポーズを分けた制作素材。
+- `sources/authored.json` と `sources/名前/{poses.webp,cat-mask.png}`：アトラス生成後に修正した場面の再生成元。
 - `jobs.json`：制作素材と作品名の対応。
 - `catalog.json`：コマ数と制作情報。
 
@@ -25,5 +26,7 @@ node scripts/build-animation.cjs --rebuild
 node scripts/build-art.cjs --embed
 node tests/animation.cjs
 ```
+
+登録済みの場面はアトラスから作り直さず、修正済みのコマとマスクをそのまま復元します。登録済みの場面を更新するときは再生成元の2ファイルも更新してください。片方でも欠けている場合、旧版に戻さずエラーになります。
 
 新しい生成画像を取り込む場合は、`scenes.json` と `job-番号.json` を置いた作業ディレクトリを `build-animation.cjs` の引数に指定します。1ジョブの画像は4列×4行。前半8セルと後半8セルで、それぞれ1作品を表します。

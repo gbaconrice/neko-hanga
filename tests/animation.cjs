@@ -1,8 +1,31 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),sharp=require('sharp');
+const {readAuthoredAnimations,restoreAuthoredAnimation}=require('../scripts/authored-animation.cjs');
+const os=require('node:os');
 const root=path.join(__dirname,'..'),dir=path.join(root,'art/animation');
 (async()=>{
  const works=JSON.parse(fs.readFileSync(path.join(root,'art/catalog.json'))),manifest=JSON.parse(fs.readFileSync(path.join(dir,'catalog.json')));
  assert.equal(works.length,153);assert.equal(manifest.length,works.length);
+ const authored=readAuthoredAnimations(dir,new Set(works.map(w=>w.file)));
+ assert.equal(authored.size,19,'19 reviewed animation overrides');
+ for(const [file,{entry,sprite,mask}] of authored){
+  assert.deepEqual(entry,manifest.find(row=>row.file===file),file+' retains reviewed metadata');
+  assert(fs.readFileSync(sprite).equals(fs.readFileSync(path.join(dir,file+'.webp'))),file+' retains authored poses');
+  assert(fs.readFileSync(mask).equals(fs.readFileSync(path.join(dir,'masks',file+'.png'))),file+' retains authored mask');
+ }
+ const fixture=fs.mkdtempSync(path.join(os.tmpdir(),'neko-authored-animation-'));
+ try{
+  const source=path.join(fixture,'sources','singapura-stool'),existing=authored.get('singapura-stool');
+  fs.mkdirSync(source,{recursive:true});
+  fs.writeFileSync(path.join(fixture,'sources','authored.json'),JSON.stringify([existing.entry]));
+  fs.copyFileSync(existing.sprite,path.join(source,'poses.webp'));
+  const allowed=new Set(['singapura-stool']);
+  assert.throws(()=>readAuthoredAnimations(fixture,allowed),/Missing authored animation source: .*cat-mask.png/);
+  fs.copyFileSync(existing.mask,path.join(source,'cat-mask.png'));
+  const restored=restoreAuthoredAnimation(fixture,readAuthoredAnimations(fixture,allowed).get('singapura-stool'));
+  assert.deepEqual(restored,existing.entry);
+  assert(fs.readFileSync(path.join(fixture,'singapura-stool.webp')).equals(fs.readFileSync(existing.sprite)));
+  assert(fs.readFileSync(path.join(fixture,'masks','singapura-stool.png')).equals(fs.readFileSync(existing.mask)));
+ }finally{fs.rmSync(fixture,{recursive:true,force:true});}
  const hashes=new Set();let movingMin=Infinity,totalBytes=0;
  for(const w of works){
   const core=await sharp(path.join(root,'art',w.file+'.png')).removeAlpha().raw().toBuffer();
@@ -13,9 +36,6 @@ const root=path.join(__dirname,'..'),dir=path.join(root,'art/animation');
   totalBytes+=fs.statSync(file).size;const frames=[];
   for(let i=0;i<6;i++)frames.push(await sharp(file).extract({left:i%3*384,top:Math.floor(i/3)*384,width:384,height:384}).ensureAlpha().raw().toBuffer());
   if(w.file==='singapura-stool'){
-   const source=path.join(dir,'sources',w.file);
-   assert(fs.readFileSync(file).equals(fs.readFileSync(path.join(source,'poses.webp'))),'grounded reach uses the checked-in authored poses');
-   assert(fs.readFileSync(path.join(dir,'masks',w.file+'.png')).equals(fs.readFileSync(path.join(source,'cat-mask.png'))),'grounded reach uses the authored cat mask');
    for(const f of frames)for(let i=0;i<f.length;i+=4)if(f[i+3]){
     assert(f[i+3]===255&&palette.has((f[i]<<16)|(f[i+1]<<8)|f[i+2]),'each visible pixel can be recolored exactly');
    }
