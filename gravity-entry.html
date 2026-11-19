@@ -6,25 +6,83 @@
 <title>ねこ版画</title>
 </head>
 <body style="margin:0;background:#243c3a;color:#f5efde;font-family:sans-serif">
-<p id="boot" style="margin:0;padding:40vh 16px 0;text-align:center;font-size:14px">読み込み中…</p>
+<div style="padding:40vh 16px 0;text-align:center;font-size:14px">
+<p id="boot" role="status" style="margin:0">読み込み中…</p>
+<button id="retry" type="button" hidden style="margin-top:12px;min-height:44px;padding:0 16px">読み込み直す</button>
+</div>
 <script>
-/* GRAVITYへ渡す小さな入口。ゲーム本体(index.html)をGitHub Pagesから読み込み、
-   iframeを使わずこの画面にそのまま展開する(window.parent はGRAVITYのまま)。 */
 (function(){
   var U='https://gbaconrice.github.io/neko-hanga/index.html';
-  function fail(){document.getElementById('boot').textContent='読み込めませんでした。開き直してください。'}
-  fetch(U,{cache:'no-cache'}).then(function(r){if(!r.ok)throw 0;return r.text()}).then(function(t){
-    var d=new DOMParser().parseFromString(t,'text/html'),scripts=[].slice.call(d.querySelectorAll('script'));
+  var boot=document.getElementById('boot'),retry=document.getElementById('retry');
+  var attempt=0,controller=null,started=false;
+  function status(text,canRetry){boot.textContent=text;retry.hidden=!canRetry}
+  function recoverName(){
+    var who=document.getElementById('who'),sdk=window.AgentSDK;
+    if(!who||who.textContent||!sdk||!sdk.user||typeof sdk.user.getMyUserInfo!=='function')return;
+    try{
+      var response=Promise.resolve(sdk.user.getMyUserInfo()),expired=false;
+      var limit=setTimeout(function(){expired=true},4000);
+      response.then(function(r){
+        clearTimeout(limit);
+        var d=(r&&r.data)||r||{},name=d.name||d.user_name;
+        if(!expired&&who.isConnected&&!who.textContent&&name)who.textContent=name;
+      },function(){clearTimeout(limit)});
+    }catch(e){}
+  }
+  function mount(t){
+    var d=new DOMParser().parseFromString(t,'text/html');
+    var scripts=[].slice.call(d.querySelectorAll('script'));
+    if(!d.getElementById('app')||!scripts.some(function(s){return !s.src&&s.textContent.trim()}))throw new Error('game');
     scripts.forEach(function(s){s.parentNode.removeChild(s)});
     [].slice.call(d.head.querySelectorAll('style')).forEach(function(s){document.head.appendChild(document.importNode(s,true))});
+    started=true;
     document.body.removeAttribute('style');document.body.innerHTML=d.body.innerHTML;
     (function run(i){
       if(i>=scripts.length)return;
       var s=document.createElement('script'),src=scripts[i].getAttribute('src');
-      if(src){s.onload=s.onerror=function(){run(i+1)};s.src=src;document.head.appendChild(s)}
-      else{s.textContent=scripts[i].textContent;document.body.appendChild(s);run(i+1)}
+      if(!src){s.textContent=scripts[i].textContent;document.body.appendChild(s);run(i+1);return}
+      var moved=false,late=false,timer;
+      function next(){
+        if(moved)return;
+        moved=true;clearTimeout(timer);run(i+1);
+      }
+      s.onload=function(){
+        var recover=late;late=false;
+        if(recover)recoverName();
+        next();
+      };
+      s.onerror=next;s.src=src;
+      if(/^https:\/\/cdn\.gravity\.place\/fe\/sdk\/[a-z0-9.-]+\.js$/i.test(src)){
+        timer=setTimeout(function(){late=!window.AgentSDK;next()},3000);
+      }
+      document.head.appendChild(s);
     })(0);
-  }).catch(fail);
+  }
+  function load(){
+    if(started)return;
+    var mine=++attempt;
+    if(controller)controller.abort();
+    controller=typeof AbortController==='function'?new AbortController():null;
+    status('読み込み中…',false);
+    var waiting=setTimeout(function(){
+      if(mine===attempt&&!started)status('読み込みが続いています。待つか、読み込み直してください。',true);
+    },18000);
+    var options={cache:'no-cache'};
+    if(controller)options.signal=controller.signal;
+    fetch(U,options).then(function(r){
+      if(mine!==attempt)return;
+      if(!r.ok)throw new Error('response');
+      return r.text();
+    }).then(function(t){
+      clearTimeout(waiting);
+      if(mine===attempt&&!started)mount(t);
+    }).catch(function(){
+      clearTimeout(waiting);
+      if(mine===attempt&&!started)status('読み込めませんでした。時間をおいて試してください。',true);
+    });
+  }
+  retry.addEventListener('click',function(){if(!retry.hidden)load()});
+  load();
 })();
 </script>
 </body>

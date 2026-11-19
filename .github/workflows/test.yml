@@ -34,3 +34,4 @@ jobs:
       - run: node tests/work-bag.cjs
       - run: node tests/voice-variants.cjs
       - run: node tests/loader-label.cjs
+      - run: node tests/gravity-entry.cjs
