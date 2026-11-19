@@ -472,13 +472,13 @@ h1{margin:6px 0 0;font-size:30px;letter-spacing:.08em}
 #logo.e-ready>span,#logo.e-ready>#stamp{display:none;animation:none}
 #logo .e-art>i,#logo .e-art>img{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
 #logo .e-art>i{display:none;background:var(--e-source) center/100% 100% no-repeat}
-#logo.e-run .e-art>i{display:block;animation:nekoTitleELetter .25s cubic-bezier(.19,.67,.31,1) var(--at) both}
+#logo.e-run .e-art>i:where(:not(.e-seal)){display:block;animation:nekoTitleELetter .25s cubic-bezier(.19,.67,.31,1) var(--at) both}
 #logo.e-run .e-art>img{opacity:0;animation:nekoTitleEFinal .01s steps(1,end) 1.22s forwards}
 #logo .e-ne{clip-path:inset(0 72.513812% 0 0);--at:.12s}
 #logo .e-ko{clip-path:inset(0 55.340700% 0 27.486188%);--at:.25s}
 #logo .e-han{clip-path:inset(0 31.860037% 0 44.659300%);--at:.38s}
 #logo .e-ga{clip-path:inset(0 11.325967% 0 68.139963%);--at:.51s}
-#logo.e-run .e-seal{clip-path:inset(58.563536% 4.097606% 19.337017% 89.134438%);transform-origin:92.357274% 69.475138%;animation:nekoTitleEPress .36s cubic-bezier(.19,.67,.31,1) .86s both}
+#logo.e-run .e-seal{display:block;clip-path:inset(58.563536% 4.097606% 19.337017% 89.134438%);transform-origin:92.357274% 69.475138%;animation:nekoTitleEPress .36s cubic-bezier(.19,.67,.31,1) .86s both}
 @keyframes nekoTitleELetter{from{opacity:0;transform:translateY(.15rem)}to{opacity:1;transform:translateY(0)}}
 @keyframes nekoTitleEPress{0%{opacity:0;transform:translateY(-16%) scale(1.24)}38%{opacity:1;transform:translateY(0) scale(.91,.82)}63%{opacity:1;transform:translateY(0) scale(1.045,1.04)}100%{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes nekoTitleEFinal{to{opacity:1}}
