@@ -34,4 +34,16 @@ jobs:
       - run: node tests/work-bag.cjs
       - run: node tests/voice-variants.cjs
       - run: node tests/loader-label.cjs
+  launcher-browser:
+    # Keep sandboxing on for the network-stall fixture. The Linux Playwright
+    # bundle on ubuntu-latest could not start with a usable sandbox.
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save playwright
+      - run: npx playwright install chromium
       - run: node tests/gravity-entry.cjs
