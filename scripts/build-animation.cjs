@@ -228,6 +228,29 @@ async function main(){
  const dir=path.join(root,'art/animation'),sources=path.join(dir,'sources');fs.mkdirSync(sources,{recursive:true});
  const authoredAnimations=scratch?new Map():readAuthoredAnimations(dir,byFile);
  const jobs=scratch?fs.readdirSync(scratch).filter(f=>/^job-\d+\.json$/.test(f)).sort().map(f=>JSON.parse(fs.readFileSync(path.join(scratch,f)))):JSON.parse(fs.readFileSync(path.join(dir,'jobs.json')));
+ // Registered works without an atlas are valid standalone sources. Existing
+ // atlas assignments stay authoritative for tile ordering and may each be used once.
+ const scheduled=new Set();
+ if(!scratch){
+  if(byFile.size!==scenes.length)throw Error('Duplicate work filename in art catalog');
+  const ids=new Set();
+  for(const j of jobs){
+   if(ids.has(j.job))throw Error('Duplicate animation atlas job: '+j.job);
+   ids.add(j.job);
+   for(const name of j.files){
+    if(scheduled.has(name))throw Error('Duplicate animation job scene: '+name);
+    if(!byFile.has(name))throw Error('Unknown scene '+name);
+    scheduled.add(name);
+   }
+  }
+  for(const name of byFile.keys())if(!scheduled.has(name)&&!authoredAnimations.has(name)){
+   throw Error('No animation source for scene: '+name);
+  }
+ }
+ const rebuild=process.argv.includes('--rebuild');
+ function complete(name,authored){
+  return fs.existsSync(path.join(dir,name+'.webp'))&&(!authored||fs.existsSync(path.join(dir,'masks',name+'.png')));
+ }
  const canonicalJobs=[];
  for(const j of jobs){
   const atlas='atlas-'+String(j.job).padStart(2,'0')+'.webp',source=path.join(sources,atlas);
@@ -238,11 +261,17 @@ async function main(){
   canonicalJobs.push({job:j.job,files:j.files,atlas,generatedSource:j.generatedSource||path.basename(j.source)});
   for(let k=0;k<j.files.length;k++){
    const scene=byFile.get(j.files[k]);if(!scene)throw Error('Unknown scene '+j.files[k]);
-   const output=path.join(dir,scene.file+'.webp'),authored=authoredAnimations.get(scene.file);
-   const complete=fs.existsSync(output)&&(!authored||fs.existsSync(path.join(dir,'masks',scene.file+'.png')));
-   if(complete&&!process.argv.includes('--rebuild'))continue;
+   const authored=authoredAnimations.get(scene.file);
+   if(complete(scene.file,authored)&&!rebuild)continue;
    manifest.push(authored?restoreAuthoredAnimation(dir,authored):await build(scene,source,k*8));console.log(scene.file);
   }
+ }
+ for(const [name,authored]of authoredAnimations)if(!scheduled.has(name)){
+  if(rebuild||!complete(name,authored)){
+   restoreAuthoredAnimation(dir,authored);console.log(name);
+  }
+  // A manually supplied complete pair must still get a catalog row.
+  manifest.push(authored.entry);
  }
  fs.writeFileSync(path.join(dir,'jobs.json'),JSON.stringify(canonicalJobs,null,2)+'\n');
  const file=path.join(root,'art/animation/catalog.json'),old=fs.existsSync(file)?JSON.parse(fs.readFileSync(file)):[];const combined=new Map(old.map(x=>[x.file,x]));for(const item of manifest)combined.set(item.file,item);fs.writeFileSync(file,JSON.stringify([...combined.values()],null,2)+'\n');
