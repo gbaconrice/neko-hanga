@@ -37,7 +37,7 @@
 |---|---|
 | `index.html` | ゲーム本体（約12MB） |
 | `gravity-entry.html` | GRAVITYへ小さく渡すための入口 |
-| `art/catalog.json` | 作品名・ファイル名・猫種・姿勢（153場面） |
+| `art/catalog.json` | 作品名・ファイル名・猫種・姿勢（155場面） |
 | `art/*.png` | 三色＋紙色の原画 |
 | `art/finish/*.webp` | 完成時に加わる背景 |
 | `art/animation/` | 猫の連続コマ（3列×2行）と制作素材 |
