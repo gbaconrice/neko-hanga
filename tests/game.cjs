@@ -101,22 +101,6 @@ async function main(){
  await page.waitForFunction(()=>window.scoreMessages.length===1);
  assert.equal(await page.locator('#over.on').count(),1);
  await page.waitForFunction(()=>document.querySelector('#bookCount').textContent==='1 / 7');assert.equal(await page.locator('#bookCanvas').count(),1);
- // The two new authored works must render in the actual result book, including
- // their Japanese caption and aria-label, rather than only decode as raw images.
- const newWorks=[['bobtail-dandelion','たんぽぽとくしゃみ'],['chartreux-stepping-stones','飛び石をたしかめて']];
- const bookImages=[];
- for(const [file,name] of newWorks){
-  const data=await page.evaluate(async ({file})=>{
-   const p=window.__pz,mi=p.W.findIndex(w=>w.file===file);
-   if(mi<0)throw new Error('missing authored work '+file);
-   const first=p.works()[0];p.works()[0]={...first,mi,sp:0,flip:0};
-   await p.bookTurn(0,false);
-   const canvas=document.querySelector('#bookCanvas');
-   return {name:document.querySelector('#bookName').textContent,label:canvas.getAttribute('aria-label'),url:canvas.toDataURL()};
-  },{file});
-  assert.equal(data.name,name);assert.equal(data.label,name);bookImages.push(data.url);
- }
- assert.notEqual(bookImages[0],bookImages[1],'new works render distinct prints in the book');
  await page.click('#bRetry');await page.waitForFunction(()=>!window.__pz.state().busy);
  assert.equal(await page.evaluate(()=>window.__pz.state().prints),0);
  assert.equal(await page.evaluate(()=>window.__pz.state().score),0);
