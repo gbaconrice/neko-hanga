@@ -73,8 +73,11 @@ async function solveByTouch(frame){
   }
   assert.ok(await frame.evaluate(()=>{const {sol,v}=window.__pz.cur();return sol.every((k,i)=>k===v[i])}));
 }
-async function verifyGame(f){
-  await f.start.waitFor();
+async function verifyGame(f,{inGame=false}={}){
+  if(inGame){
+    await f.frame.locator('#game.on').waitFor();
+    assert.equal(await f.frame.evaluate(()=>window.__pz.state().running),true);
+  }else await f.start.waitFor();
   assert.equal(await f.frame.locator('#app').count(),1);
   assert.equal(await f.retry.count(),0);
   await f.frame.waitForFunction(()=>document.querySelector('#who').textContent==='Fixture player');
@@ -98,7 +101,7 @@ async function main(){
       const points=await f.frame.evaluate(()=>window.__pz.state().score);
       assert.deepEqual(await f.page.evaluate(()=>received),[]);
       await f.sdks[0]();
-      await verifyGame(f);
+      await verifyGame(f,{inGame:true});
       await f.frame.evaluate(()=>{dispatchEvent(new Event('pagehide'));dispatchEvent(new Event('pagehide'))});
       await f.page.waitForFunction(()=>received.length===1);
       await pause(100);
