@@ -1202,10 +1202,10 @@
   {
     "file": "singapura-stool",
     "frames": 6,
-    "source": "atlas-75.webp",
-    "catPixels": 21987,
+    "source": "singapura-stool/poses.webp",
+    "catPixels": 10136,
     "front": true,
-    "floor": false
+    "floor": true
   },
   {
     "file": "somali-birdhouse",
