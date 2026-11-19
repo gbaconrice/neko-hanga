@@ -4,7 +4,7 @@
 
 ## 素材
 
-`catalog.json` が作品の一覧です。作品ごとに次の素材を使います。
+`catalog.json` が153場面の一覧です。作品ごとに次の素材を使います。
 
 - `名前.png`：512px、サーモン `#d78479`・ティール `#3b6863`・マスタード `#c4a052`・紙色 `#f5efde` の4値。
 - `finish/名前.webp`：完成時に加える384pxの背景。猫・人物を描かず、中央を明るく空け、周囲に場面に合う花や葉を描く。
@@ -28,18 +28,6 @@ node scripts/build-art.cjs --embed
 原画はタイル境界の3pxを除き、512pxへ正規化して3色＋紙色に減色します。背景は384pxのWebPにします。元の生成画像は変更しません。
 
 個別PNGと背景を置き換えた場合は `--embed` だけを実行します。作品数はcatalogから取得し、全素材が揃っていない場合はエラーにします。
-
-## 1場面ずつ追加する
-
-既存のアトラスに混ぜずに新作を加える場合は、`catalog.json` に作品名（`n`）、ファイル名（`file`）、猫種（`breed`）、動き（`pose`）を追加します。512pxの原画と384pxの完成背景は上記と同じ場所に置き、[描き起こしの再生成元](animation/README.md)に連続コマを登録します。アトラスのない作品は `jobs.json` に追記しません。
-
-```
-node scripts/build-animation.cjs
-node scripts/build-art.cjs --embed
-python3 scripts/build-font.py
-node tests/animation.cjs
-node tests/work-bag.cjs
-```
 
 ## 猫の動き
 

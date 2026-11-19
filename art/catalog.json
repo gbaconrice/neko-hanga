@@ -2084,17 +2084,5 @@
     "file": "angora-musicbox",
     "breed": "ターキッシュアンゴラ",
     "pose": "大きなしっぽの白猫がお座りする"
-  },
-  {
-    "n": "たんぽぽとくしゃみ",
-    "file": "bobtail-dandelion",
-    "breed": "ジャパニーズボブテイル",
-    "pose": "たんぽぽに鼻を寄せてくしゃみをする"
-  },
-  {
-    "n": "飛び石をたしかめて",
-    "file": "chartreux-stepping-stones",
-    "breed": "シャルトリュー",
-    "pose": "後ろ足で体を支えながら次の飛び石を踏み試す"
   }
 ]
