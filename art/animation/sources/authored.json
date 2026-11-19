@@ -150,5 +150,21 @@
     "catPixels": 27179,
     "front": true,
     "floor": false
+  },
+  {
+    "file": "bobtail-dandelion",
+    "frames": 6,
+    "source": "bobtail-dandelion/poses.webp",
+    "catPixels": 26577,
+    "front": true,
+    "floor": true
+  },
+  {
+    "file": "chartreux-stepping-stones",
+    "frames": 6,
+    "source": "chartreux-stepping-stones/poses.webp",
+    "catPixels": 25186,
+    "front": true,
+    "floor": true
   }
 ]
