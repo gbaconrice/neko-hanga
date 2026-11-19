@@ -1,3 +1,4 @@
+const startWithCompanion=require('./choose-companion.cjs');
 // 次の称号まで、判定の判子、連続の取り返し、弾いて回すつまみ、結果の集計と刷り上がりの束。
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -21,10 +22,24 @@ async function main(){
  const idle=()=>page.waitForFunction(()=>{const s=window.__pz.state();return s.running&&!s.busy});
  const align=()=>page.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});
  const note=()=>page.locator('#toast span').textContent();
+ const stamp=page.locator('#stampSlot .successPaw');
+ const expectStamp=async (grade,word)=>{
+  await page.clock.runFor(640); // wait for the normal reveal and the stamp animation to settle
+  assert.equal(await page.locator('#paper .judge').count(),0,'the judgement never covers the art');
+  assert.equal(await stamp.count(),1);
+  assert.equal(await stamp.getAttribute('alt'),word);
+  assert(await stamp.evaluate((el,g)=>el.classList.contains('g'+g),grade));
+  assert(await stamp.evaluate(el=>el.complete&&el.naturalWidth>0));
+ };
+ const expectNoStamp=async()=>{
+  await idle();
+  assert.equal(await stamp.count(),0,'the judgement leaves with the sheet');
+  assert.equal(await page.locator('#knobs').evaluate(el=>getComputedStyle(el).visibility),'visible','next sheet knobs are shown again');
+ };
  const lastWork=()=>page.evaluate(()=>{const w=window.__pz.works();const x=w[w.length-1];return {tags:x.tags,pts:x.pts,thumb:!!x.thumb}});
  // 残り時間の割合が f になるまで時計を進める
  const spend=async f=>{const s=await st();await page.clock.runFor(Math.max(0,Math.round((s.tLeft-s.tMax*f)*1000)))};
- await page.click('#bStart');await idle();
+ await startWithCompanion(page);await idle();
  // 最初の一枚は、つまみに触れるまで時間が減らない。1回触れて時間を動かす。
  const k0=await page.locator('.kn .dial').first().boundingBox();
  await page.mouse.move(k0.x+k0.width*.8,k0.y+k0.height/2);await page.mouse.down();await page.mouse.up();
@@ -34,16 +49,16 @@ async function main(){
  // 判定: 残り時間で めろめろ・うっとり・ごろごろ。判子と見どころに出る。
  await align();await page.click('#bPrint');
  assert.equal((await note()).split('　')[0],'めろめろ！');
- await page.clock.runFor(340);assert.equal(await page.locator('#paper .judge.g2').textContent(),'めろめろ');
+ await expectStamp(2,'めろめろ');
  assert((await lastWork()).tags.includes('めろめろ'));assert((await lastWork()).thumb,'a small copy is kept for the result stack');
- await idle();assert.equal(await page.locator('#paper .judge').count(),0,'the stamp leaves with the sheet');
+ await expectNoStamp();
  assert.equal(await page.locator('#sheetNo').textContent(),'印刷工まで2枚');
  await spend(.65);await align();await page.click('#bPrint');
- assert.equal((await note()).split('　')[0],'うっとり！');await page.clock.runFor(340);assert.equal(await page.locator('#paper .judge.g1').count(),1);
- await idle();
+ assert.equal((await note()).split('　')[0],'うっとり！');await expectStamp(1,'うっとり');
+ await expectNoStamp();
  await spend(.3);await align();await page.click('#bPrint');
  const n3=await note();assert.equal(n3.split('　')[0],'ごろごろ！');assert(n3.includes('印刷工に昇格！'),'rank-up is announced '+n3);
- await page.clock.runFor(340);assert.equal(await page.locator('#paper .judge.g0').count(),1);
+ await expectStamp(0,'ごろごろ');
  assert(!(await lastWork()).tags.some(t=>t==='うっとり'||t==='めろめろ'));
  await idle();assert.equal(await page.locator('#sheetNo').textContent(),'刷り師まで4枚');
 
@@ -87,17 +102,31 @@ async function main(){
  assert((await page.locator('#oCompare').textContent()).includes('前回より'));
  await page.click('#bRetry');await idle();assert.equal(await page.locator('#stack').count(),0);
 
- // 小さい画面: いちばん長い称号の表示がスコアに重ならず、判子が紙の中に収まる。
- await page.setViewportSize({width:320,height:568});await page.waitForTimeout(100);
- const fit=await page.evaluate(()=>{const e=document.querySelector('#sheetNo');e.textContent='国宝まで10枚';const r=e.getBoundingClientRect(),m=document.querySelector('.hud .count').getBoundingClientRect();
-  const p=document.querySelector('#paper'),j=document.createElement('i');j.className='judge g2';j.textContent='めろめろ';j.style.animation='none';p.appendChild(j);const a=j.getBoundingClientRect(),b=p.getBoundingClientRect();j.remove();
-  return {right:r.right,score:m.left,jw:a.width,in:a.left>=b.left&&a.right<=b.right+1&&a.top>=b.top-1,clip:j.scrollWidth>j.clientWidth+1}});
- assert(fit.right<=fit.score,'the rank goal does not touch the score '+JSON.stringify(fit));assert(fit.in&&!fit.clip&&fit.jw>=28,'the stamp fits the paper and its text fits the stamp '+JSON.stringify(fit));
+ // 小さい画面: 本物の肉球印と完成絵・操作が重ならないこと。
+ await page.evaluate(()=>history.replaceState(null,'','?debug=1&top=74'));
+ await page.setViewportSize({width:320,height:568});
+ await page.clock.runFor(100);
+ const fit=await page.evaluate(()=>{
+  const e=document.querySelector('#sheetNo');e.textContent='国宝まで10枚';
+  return {right:e.getBoundingClientRect().right,score:document.querySelector('.hud .count').getBoundingClientRect().left};
+ });
+ assert(fit.right<=fit.score,'the rank goal does not touch the score '+JSON.stringify(fit));
+ await align();await page.click('#bPrint');await expectStamp(2,'めろめろ');
+ const layout=await stamp.evaluate(el=>{
+  const r=el.getBoundingClientRect(),paper=document.querySelector('#paper').getBoundingClientRect(),btn=document.querySelector('#bPrint').getBoundingClientRect();
+  return {w:r.width,left:r.left,right:r.right,top:r.top,bottom:r.bottom,paperBottom:paper.bottom,buttonTop:btn.top,
+   viewportW:innerWidth,viewportH:innerHeight,knobs:getComputedStyle(document.querySelector('#knobs')).visibility};
+ });
+ assert(layout.left>=0&&layout.right<=layout.viewportW&&layout.top>=0&&layout.bottom<=layout.viewportH&&layout.w>=54,
+  'the actual grade stamp fits the viewport '+JSON.stringify(layout));
+ assert(layout.top>=layout.paperBottom&&layout.bottom<=layout.buttonTop&&layout.knobs==='hidden',
+  'the stamp stays out of art and print controls '+JSON.stringify(layout));
+ await expectNoStamp();
  await page.close();
 
  // 弾いて回す: 速く回して離すと、勢いで先まで回って止まる。(実時間で確かめる)
  const real=await open(false);
- await real.click('#bStart');await real.waitForFunction(()=>{const s=window.__pz.state();return s.running&&!s.busy});
+ await startWithCompanion(real);await real.waitForFunction(()=>{const s=window.__pz.state();return s.running&&!s.busy});
  await real.evaluate(()=>{window.__pz.cur().v[0]=0});
  const d=await real.locator('.kn .dial').first().boundingBox(),cx=d.x+d.width/2,cy=d.y+d.height/2,r=d.width*.42;
  const at=a=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)];

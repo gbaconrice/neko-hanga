@@ -1,3 +1,4 @@
+const startWithCompanion=require('./choose-companion.cjs');
 // 制限時間と判定(めろめろ・うっとり)の締め切りが、紙の操作量に合っていること。
 // 序盤は従来どおり。後半は最速の操作でもめろめろに届く。時間の棒の境目は実際の締め切りの位置。
 // 出る問題(絵の順番・つまみ・正解)が、ゲームごと・読み込みごとに変わること。
@@ -45,7 +46,7 @@ async function main(){
   near(b.u,b.w*(1-s.dU/s.tMax),'うっとり divider sits where the remaining time hits the deadline',.6);
   near(b.m,b.w*(1-s.dM/s.tMax),'めろめろ divider sits where the remaining time hits the deadline',.6);
  };
- await page.click('#bStart');await idle();
+ await startWithCompanion(page);await idle();
 
  /* ---- 序盤は従来どおり(やさしくしない) ---- */
  let s=await st();
@@ -135,7 +136,7 @@ async function main(){
  await page.evaluate(()=>window.__pz.setLives(1));await page.click('#bPrint');await run(400);await run(2500);
  await page.waitForFunction(()=>!window.__pz.state().running);
  await page.click('#bRetry');const g2=await record(10);
- await page.close();page=await open();await page.click('#bStart');const g3=await record(10);
+ await page.close();page=await open();await startWithCompanion(page);const g3=await record(10);
  const ids=g=>g.slice(0,10).map(x=>x.mi).join(',');
  assert.notEqual(ids(g1),ids(g2),'second game in the same page has a new order');
  assert.notEqual(ids(g1),ids(g3),'a reload has a new order');assert.notEqual(ids(g2),ids(g3));

@@ -58,26 +58,161 @@ function registration(reference,current){
  }
  return move;
 }
+async function touchingForepaw(cat){
+ // The third authored pose has the left cat reaching across the scarf.
+ // Retain that original ink in front of the cloth. This polygon is only an
+ // occlusion window; it copies original pixels and never draws another paw.
+ const matte=Buffer.from('<svg width="384" height="384"><path fill="white" d="M143 196L157 185L169 179L183 178L193 185L198 194L192 207L171 220L141 224L132 211Z"/></svg>');
+ const placed=await sharp({create:{width:384,height:384,channels:4,background:'#00000000'}}).composite([cat]).png().toBuffer();
+ const input=await sharp(placed).composite([{input:matte,blend:'dest-in'}]).png().toBuffer();
+ return {input,top:0,left:0};
+}
+async function scarfAcross(tile){
+ const width=223,height=49,rise=30;
+ const d=await sharp(tile.png).extract(tile.bounds).resize(width,height,{fit:'fill',kernel:'nearest'}).ensureAlpha().raw().toBuffer();
+ const output=Buffer.alloc(width*(height+rise)*4);
+ for(let x=0;x<width;x++)for(let y=0;y<height;y++){
+  const a=(y*width+x)*4,b=((y+Math.round(x*rise/(width-1)))*width+x)*4;
+  d.copy(output,b,a,a+4);
+ }
+ const input=await sharp(output,{raw:{width,height:height+rise,channels:4}}).png().toBuffer();
+ return {input,left:79,top:151};
+}
+async function cleanCushionFringe(cat){
+ // Only atlas-74's poses 4–6 carry a torn strip of opaque paper below the
+ // paws. Preserve the original ink/pose and its placement, then clear only
+ // paper underneath the traced lower edge of that drawing.
+ const d=await sharp({create:{width:384,height:384,channels:4,background:'#00000000'}}).composite([cat]).raw().toBuffer();
+ const last=new Int16Array(384).fill(224);
+ for(let y=224;y<384;y++)for(let x=0;x<384;x++){
+  const p=(y*384+x)*4;
+  if(d[p+3]&&!(d[p]===245&&d[p+1]===239&&d[p+2]===222))last[x]=y;
+ }
+ let removed=0;
+ for(let x=0;x<384;x++){
+  const edge=Math.max(last[x],last[Math.max(0,x-1)],last[Math.min(383,x+1)])+1;
+  for(let y=edge+1;y<384;y++){
+   const p=(y*384+x)*4;
+   if(d[p+3]&&d[p]===245&&d[p+1]===239&&d[p+2]===222){d.fill(0,p,p+4);removed++}
+  }
+ }
+ if(removed<200)throw Error('Expected opaque paper fringe on atlas-74');
+ return {input:await sharp(d,{raw:{width:384,height:384,channels:4}}).png().toBuffer(),left:0,top:0};
+}
 async function build(scene,source,offset){
  const tiles=[];for(let k=0;k<8;k++)tiles.push(await cleanTile(source,offset+k,true));
  const cats=tiles.slice(2);if(cats.some(t=>t.count<300))throw Error('Missing cat pose: '+scene.file);
+ const prop=layouts.propPlacement?.[scene.file],poseProp=layouts.poseProp?.[scene.file],poseReg=layouts.poseRegistration?.[scene.file];
  // A single scale for all poses preserves real stretches/limb extensions.
- const scale=Math.min(252/Math.max(...cats.map(t=>t.bounds.width)),212/Math.max(...cats.map(t=>t.bounds.height)));
- const back={input:await sharp(tiles[0].png).resize(324,324,{kernel:'nearest'}).toBuffer(),left:30,top:30};
- const side=layouts.propSide[scene.file];
- let front=null;if(tiles[1].count>200&&!noFront.has(scene.file)){const b=tiles[1].bounds;
-  front=side?await place(tiles[1],Math.min(106/b.width,128/b.height),side==='left'?78:306,338):b.width>300&&b.height>300?{input:await sharp(tiles[1].png).resize(324,324,{kernel:'nearest'}).toBuffer(),left:30,top:30}:await place(tiles[1],Math.min(268/b.width,128/b.height),192,345);
+ const scale=Math.min((prop?.catWidth??252)/Math.max(...cats.map(t=>t.bounds.width)),212/Math.max(...cats.map(t=>t.bounds.height)))*(poseReg?.scale??poseProp?.catScale??1);
+ let back={input:await sharp(tiles[0].png).resize(324,324,{kernel:'nearest'}).toBuffer(),left:30,top:30};
+ // The bell is part of atlas-73 cell 8 (cell 9 is empty). Restore the
+ // space between its rim and the resting cat's whiskers without changing
+ // the established paw registration. Keep the other native decor in place.
+ if(scene.file==='balinese-bell'){
+  const raw={width:324,height:324,channels:4},pix=await sharp(back.input).ensureAlpha().raw().toBuffer(),shifted=Buffer.alloc(pix.length);
+  for(let y=0;y<203;y++)for(let x=0;x<117;x++){
+   const i=(y*324+x)*4;
+   if(!pix[i+3])continue;
+   const gold=pix[i]===196&&pix[i+1]===160, ivory=pix[i]===245&&pix[i+1]===239;
+   const rose=pix[i]===215&&pix[i+1]===132&&y>=23&&x>=35&&x<116&&(y<197||x>=55);
+   if(!gold&&!ivory&&!rose)continue;
+   if(x<32)throw Error('Unexpected native bell bounds');
+   const q=((y+11)*324+x-32)*4;
+   pix.copy(shifted,q,i,i+4);pix.fill(0,i,i+4);
+   // In rows where both sides of the original hanger are the same
+   // branch ink, bridge the gap with a native adjacent branch pixel.
+   if(y<33&&x>=70&&x<=80){
+    const l=(y*324+x-8)*4,r=(y*324+x+8)*4;
+    if(pix[l]===59&&pix[l+3]&&pix[r]===59&&pix[r+3])pix.copy(pix,i,l,l+4);
+   }
+  }
+  const png=await sharp(shifted,{raw}).png().toBuffer();
+  back.input=await sharp(pix,{raw}).composite([{input:png}]).png().toBuffer();
  }
+ // The canonical atlas has a narrow continuation of these scenes' back
+ // art in the next cell; that strip is not an independent foreground prop.
+ // Preserve the original 324px back layer and cat registration.
+ const backRightOverflow={gift:34,shell:7,lotus:5,'calico-rain':7}[scene.file];
+ if(backRightOverflow){
+  const w=Math.ceil(backRightOverflow*324/384);
+  const rawRight=await sharp(source).extract({
+   left:(offset%4+1)*384,top:Math.floor(offset/4)*384,width:backRightOverflow,height:384
+  }).resize(w,324,{fit:'fill',kernel:'nearest'}).png().toBuffer();
+  const right={input:rawRight,left:354,top:30};
+  back={input:await sharp({create:{width:384,height:384,channels:4,background:'#00000000'}})
+    .composite([back,right]).png().toBuffer(),left:0,top:0};
+ }
+ // The original ragdoll print has its upper sprig beside the ear, not behind
+ // it. Preserve the lower sprig in place and register only the upper sprig.
+ if(scene.file==='ragdoll-knead'){
+  const upper=await sharp(back.input).extract({left:0,top:0,width:324,height:202}).resize(260,162,{kernel:'nearest'}).png().toBuffer();
+  const lower=await sharp(back.input).extract({left:0,top:202,width:324,height:122}).png().toBuffer();
+  back={input:await sharp({create:{width:384,height:384,channels:4,background:'#00000000'}}).composite([{input:upper,left:10,top:25},{input:lower,left:30,top:232}]).png().toBuffer(),left:0,top:0};
+ }
+ // Keep Lykoi's native mustard sprig clear of the now-visible basket handle.
+ if(scene.file==='lykoi-basket'){
+  const left=await sharp(back.input).extract({left:0,top:0,width:220,height:324}).png().toBuffer();
+  const sprig=await sharp(back.input).extract({left:220,top:85,width:104,height:135}).png().toBuffer();
+  back={input:await sharp({create:{width:384,height:384,channels:4,background:'#00000000'}}).composite([{input:left,left:30,top:30},{input:sprig,left:250,top:66}]).png().toBuffer(),left:0,top:0};
+ }
+ const side=layouts.propSide[scene.file];
+ if(poseProp?.sourceCrop){const [left,top,width,height]=poseProp.sourceCrop;tiles[1].bounds={left,top,width,height}}
+ let front=null;if(tiles[1].count>200&&!noFront.has(scene.file)){const b=tiles[1].bounds;
+  front=poseProp?await place(tiles[1],poseProp.width/b.width,poseProp.x,poseProp.bottom):prop?await place(tiles[1],Math.min(prop.maxWidth/b.width,prop.maxHeight/b.height),prop.anchor,prop.baseline):side?await place(tiles[1],Math.min(106/b.width,128/b.height),side==='left'?78:306,338):b.width>300&&b.height>300?{input:await sharp(tiles[1].png).resize(324,324,{kernel:'nearest'}).toBuffer(),left:30,top:30}:await place(tiles[1],Math.min(268/b.width,128/b.height),192,345);
+ }
+ // Preserve the source prop for these poses without changing established cat
+ // registration. The streamer sits behind the reaching paw; the scarf wraps
+ // both necks, so it is placed in front.
+ let continuity=null;
+ if(scene.file==='american-koinobori'){
+  continuity=await place(tiles[1],Math.min(100/tiles[1].bounds.width,168/tiles[1].bounds.height),325,259);
+ }
+ if(scene.file==='russian-angora-scarf'){
+  continuity=await scarfAcross(tiles[1]);
+ }
+ // The low-stalking pose was registered without the generic foreground
+ // branch. Restore its original atlas mouse low and left of all six reaches.
+ if(scene.file==='siamese-lowstalk'){
+  const t=tiles[1];
+  continuity=await place(t,84/t.bounds.width,122,349);
+ }
+ if(scene.file==='sphynx-listening'){
+  continuity=await place(tiles[1],Math.min(256/tiles[1].bounds.width,126/tiles[1].bounds.height),192,313);
+ }
+ // Reintroduce the authored cushion/rug as static layers, without enabling
+ // the generic front-placement branch that would move the authored cat.
+ const originalCushion={
+  'british-rearloaf':{x:180,bottom:322,maxWidth:250,maxHeight:75},
+  'sphynx-lookback':{x:264,bottom:323,maxWidth:155,maxHeight:68},
+  'kitten-trio':{x:192,bottom:364,maxWidth:270,maxHeight:86}
+ }[scene.file];
+ if(originalCushion){
+  const t=tiles[1],o=originalCushion;
+  continuity=await place(t,Math.min(o.maxWidth/t.bounds.width,o.maxHeight/t.bounds.height),o.x,o.bottom);
+ }
+ // The backdrop already contains the pincushion, two spools and loose
+ // thread from the sewing scene. Keep the authored basket at its existing
+ // registration but omit only the overlapping foreground copies.
+ if(scene.file==='ragamuffin-sewing'){
+  const matte=Buffer.from('<svg width="384" height="384"><path shape-rendering="crispEdges" fill="white" d="M64 0H383V225L328 226L316 232L305 239L302 249L302 255L308 260L310 269L290 266L274 266L258 270L252 280L259 294L258 315L235 320L201 318L190 321L152 323L120 323L115 316L106 306L92 296L77 289L62 286L62 272L59 256L53 238L43 223L32 162L0 149V0Z"/></svg>');
+  const basket=await sharp(tiles[1].png).composite([{input:matte,blend:'dest-in'}]).png().toBuffer();
+  back=null; // Background already provides both native flower shapes.
+  front={...front,input:await sharp(basket).resize(324,324,{kernel:'nearest'}).png().toBuffer()};
+ }
+ const drawnFront=backRightOverflow?null:front;
  const floor=/(book|yarn|mat|blanket|knead|stretch|roll|sleep|olive|feather|quilt|circle|rug|carpet|bench|chair|bed)/.test(scene.file);
- const baseline=side?292:front?(floor?270:274):294,anchor=side?(side==='left'?226:158):192,frames=[],catLayers=[];let reference=null;
+ const baseline=poseReg?.baseline??poseProp?.catBaseline??(prop?prop.catBaseline:side?292:front?(floor?270:274):294),anchor=poseReg?.x??prop?.catAnchor??poseProp?.catX??(side?(side==='left'?226:158):192),frames=[],catLayers=[];let reference=null;
  for(let k=0;k<6;k++){
   const cat=await place(cats[k],scale,anchor,baseline),sig=await signature(cat);
   if(!reference)reference=sig;else{const [dx,dy]=registration(reference,sig);cat.left+=dx;cat.top+=dy}
   // Keep articulated forelegs visible above container rims. Tall props such
   // as sewing boxes otherwise hide the entire cat with a generic placement.
-  const layers=[back,front,cat];
+  const touching=scene.file==='russian-angora-scarf'&&k===2?await touchingForepaw(cat):null;
+  const finalCat=scene.file==='himalayan-cushion'&&k>=3?await cleanCushionFringe(cat):cat;
+  const layers=scene.file==='russian-angora-scarf'?[back,drawnFront,cat,continuity,touching]:poseProp?.frontOfCat?[back,cat,drawnFront]:[back,drawnFront,continuity,finalCat];
   const frame=await sharp({create:{width:384,height:384,channels:4,background:'#00000000'}}).composite(layers.filter(Boolean)).png().toBuffer();frames.push(frame);
-  catLayers.push(await sharp({create:{width:384,height:384,channels:4,background:'#00000000'}}).composite([cat]).png().toBuffer());
+  catLayers.push(await sharp({create:{width:384,height:384,channels:4,background:'#00000000'}}).composite([finalCat]).png().toBuffer());
  }
  const dir=path.join(root,'art/animation');fs.mkdirSync(dir,{recursive:true});
  await sharp({create:{width:1152,height:768,channels:4,background:'#00000000'}}).composite(frames.map((input,i)=>({input,left:i%3*384,top:Math.floor(i/3)*384}))).webp({lossless:true,effort:6}).toFile(path.join(dir,scene.file+'.webp'));
@@ -85,7 +220,7 @@ async function build(scene,source,offset){
  // prop pixels outside the cat remain byte-identical across every pose.
  const mask=Buffer.alloc(384*384);for(const cat of catLayers){const d=await sharp(cat).ensureAlpha().raw().toBuffer();for(let i=0;i<mask.length;i++)if(d[i*4+3])mask[i]=255}
  fs.mkdirSync(path.join(dir,'masks'),{recursive:true});await sharp(mask,{raw:{width:384,height:384,channels:1}}).png().toFile(path.join(dir,'masks',scene.file+'.png'));
- return {file:scene.file,frames:6,source:path.basename(source),catPixels:mask.reduce((n,a)=>n+(a>0),0),front:!!front,floor};
+ return {file:scene.file,frames:6,source:path.basename(source),catPixels:mask.reduce((n,a)=>n+(a>0),0),front:!!(drawnFront||continuity),floor};
 }
 async function main(){
  const scenes=JSON.parse(fs.readFileSync(scratch?path.join(scratch,'scenes.json'):path.join(root,'art/catalog.json'))),byFile=new Map(scenes.map(s=>[s.file,s]));let manifest=[];

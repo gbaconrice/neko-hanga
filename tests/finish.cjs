@@ -1,3 +1,4 @@
+const startWithCompanion=require('./choose-companion.cjs');
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const {chromium}=require('playwright');
 (async()=>{
@@ -16,7 +17,7 @@ const {chromium}=require('playwright');
   await p.route('https://cdn.gravity.place/**',r=>r.abort());
   await p.goto('http://127.0.0.1:4173/?debug=1');await p.waitForFunction(()=>window.__pz?.state().artReady);await p.evaluate(()=>window.__pz.tapGuard(0));
   assert.equal(await p.title(),'ねこ版画');assert.equal(await p.locator('#printLabel').count(),0);
-  await p.click('#bStart');await p.waitForFunction(()=>window.__pz.state().meows===1);
+  await startWithCompanion(p);await p.waitForFunction(()=>window.__pz.state().meows===1);
   assert.equal(await p.locator('.paw:not(.spent)').count(),3);
   await p.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});await p.click('#bPrint');
   await p.waitForFunction(()=>window.__pz.state().audioPlayed>0);
@@ -38,7 +39,7 @@ const {chromium}=require('playwright');
   await fallback.addInitScript(()=>{window.AudioContext=undefined;window.webkitAudioContext=undefined;window.fetch=()=>Promise.reject(Error('blocked'))});
   await fallback.route('https://cdn.gravity.place/**',r=>r.abort());
   await fallback.goto('http://127.0.0.1:4173/?debug=1');await fallback.waitForFunction(()=>window.__pz?.state().artReady);await fallback.evaluate(()=>window.__pz.tapGuard(0));
-  await fallback.tap('#bStart');await fallback.waitForTimeout(200);
+  await startWithCompanion(fallback,{touch:true});await fallback.waitForTimeout(200);
   await fallback.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});await fallback.tap('#bPrint');
   await fallback.waitForFunction(()=>window.__pz.state().audioPlayed>0);
   assert.equal(await fallback.evaluate(()=>window.__pz.state().audioContext),'unsupported');

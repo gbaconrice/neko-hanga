@@ -1,3 +1,4 @@
+const startWithCompanion=require('./choose-companion.cjs');
 // 結果画面の控え・拡大表示、完成図の早送り、残り時間の警告、GRAVITY用の入口を確かめる。
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
@@ -7,8 +8,8 @@ const SDK='window.AgentSDK={user:{getMyUserInfo:()=>Promise.resolve({data:{name:
 async function main(){
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||(fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),headless:true,args:['--no-sandbox']});
  const errors=[];
- async function open(url,size){
-  const page=await browser.newPage({viewport:size||{width:390,height:844},deviceScaleFactor:2});
+ async function open(url,size,hasTouch=false){
+  const page=await browser.newPage({viewport:size||{width:390,height:844},deviceScaleFactor:2,hasTouch});
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{window.scoreMessages=[];window.addEventListener('message',e=>{if(e.data?.type==='gameOver')window.scoreMessages.push(e.data)})});
   await page.route('https://cdn.gravity.place/**',r=>r.fulfill({contentType:'text/javascript',body:SDK}));
@@ -23,10 +24,26 @@ async function main(){
 
  const page=await open('http://127.0.0.1:4173/?debug=1&top=98');
  // 題字は1文字ずつ左から現れ、最後に肉球の判子が出る。説明は文章で読める。
- assert.equal(await page.locator('#logo.play span').count(),4);
- const delays=await page.locator('#logo span').evaluateAll(els=>els.map(e=>parseFloat(getComputedStyle(e).animationDelay)));
- assert(delays.every((d,i)=>i===0||d>delays[i-1]),'letters appear left to right '+delays);
- assert((await page.locator('#stamp').evaluate(e=>parseFloat(getComputedStyle(e).animationDelay)))>delays[3],'the stamp lands last');
+ await page.locator('#logo.e-ready').waitFor();
+ assert.equal(await page.locator('#logo>span:visible').count(),0,'approved logo E replaces the fallback');
+ assert.equal(await page.locator('#logoEAsset').evaluate(img=>img.naturalWidth),2172);
+ // Read the E rules on a copy: art decoding can finish after the real reveal ends.
+ const reveal=await page.locator('#logo').evaluate(logo=>{
+  const clone=logo.cloneNode(true);clone.classList.add('e-run');
+  clone.style.cssText+=';position:absolute;left:-9999px';
+  logo.after(clone);
+  try{
+   const art=clone.querySelector('.e-art');
+   const letters=[...art.querySelectorAll('i:not(.e-seal)')].map(e=>getComputedStyle(e));
+   const seal=getComputedStyle(art.querySelector('.e-seal'));
+   return {delays:letters.map(css=>parseFloat(css.animationDelay)),letters:letters.map(css=>css.animationName),seal:seal.animationName,sealDelay:parseFloat(seal.animationDelay)};
+  }finally{clone.remove()}
+ });
+ assert.equal(reveal.delays.length,4);
+ assert(reveal.letters.every(n=>n==='nekoTitleELetter'),'E lettering uses the reveal animation');
+ assert(reveal.delays.every((d,i)=>i===0||d>reveal.delays[i-1]),'E letters appear left to right '+reveal.delays);
+ assert.equal(reveal.seal,'nekoTitleEPress');
+ assert(reveal.sealDelay>reveal.delays[3],'E seal presses last');
  assert.equal(await page.locator('#logo').getAttribute('aria-label'),'ねこ版画');
  const how=await page.locator('.how li').allTextContents();assert.equal(how.length,3);assert(how.every(s=>s.endsWith('。')),'rules are full sentences');
  assert.equal(await page.evaluate(()=>document.fonts.check('900 20px NekoMaru','ねこ版画刷る')),true,'the rounded font is embedded');
@@ -39,7 +56,7 @@ async function main(){
  for(let i=0;i<3;i++){await page.click('#hero');await page.clock.runFor(200)}
  const heroAfter=await st(page);
  assert.equal(heroAfter.hero,heroBefore.hero,'tapping the title art keeps the same work');assert.equal(heroAfter.audioPlayed,heroBefore.audioPlayed,'the title art stays quiet');
- await page.click('#bStart');await page.waitForFunction(()=>!window.__pz.state().busy);
+ await startWithCompanion(page);await page.waitForFunction(()=>!window.__pz.state().busy);
  // 最初の一枚: つまみに触れるまで時間は減らず、回す案内が出る。触れると案内が消えて時間が動く。
  assert((await st(page)).waitTouch);assert.equal(await page.locator('.tip').count(),1);
  const bar=()=>page.locator('#tbar').evaluate(e=>e.getBoundingClientRect().width);
@@ -148,17 +165,26 @@ async function main(){
  assert(await page.locator('#bookEmpty').isVisible());assert(!(await page.locator('#bookPage').isVisible()));
  await page.close();
 
- // 動作確認: 題字を5回タップで開き、項目が並ぶ。
- const chk=await open('http://127.0.0.1:4173/?debug=1&top=98');
+ // 実タッチでEの文字を5回。絵のタップや ?check=1 では代用しない。
+ const chk=await open('http://127.0.0.1:4173/?debug=1&top=98',{width:320,height:568},true);
+ await chk.locator('#logo.e-ready').waitFor();
+ await chk.clock.runFor(1300);
+ assert.equal(await chk.locator('#logo.e-run').count(),0);
  assert.equal(await chk.locator('#check.on').count(),0);
- for(let i=0;i<5;i++)await chk.click('#logo');
- assert.equal(await chk.locator('#check.on').count(),1);
+ const logoBox=await chk.locator('#logo').boundingBox();
+ assert(logoBox?.width>0&&logoBox?.height>0);
+ const x=Math.round(logoBox.x+logoBox.width*.36),y=Math.round(logoBox.y+logoBox.height*.5);
+ assert(await chk.evaluate(({x,y})=>Boolean(document.elementFromPoint(x,y)?.closest('#logo')),{x,y}),'the displayed E lettering receives the touch');
+ for(let i=1;i<=5;i++){
+  await chk.touchscreen.tap(x,y);
+  assert.equal(await chk.locator('#check.on').count(),i===5?1:0,'diagnostics changes state only on tap five');
+ }
  const items=await chk.locator('#checkList dt').allTextContents();
  assert(['GRAVITYの中','SDK','名前','上の余白','音'].every(k=>items.includes(k)),'check items '+items);
  assert((await chk.locator('#checkList').textContent()).includes('98px'));
- await chk.click('#checkClose');assert.equal(await chk.locator('#check.on').count(),0);
+ await chk.locator('#checkClose').tap();assert.equal(await chk.locator('#check.on').count(),0);
  // 途中で閉じると、その時点の得点を送る。終了時は、より高いときだけ送り直す。
- await chk.click('#bStart');await chk.waitForFunction(()=>!window.__pz.state().busy);
+ await startWithCompanion(chk,{touch:true});await chk.waitForFunction(()=>!window.__pz.state().busy);
  await chk.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});await chk.click('#bPrint');await chk.waitForFunction(()=>!window.__pz.state().busy);
  await chk.evaluate(()=>window.dispatchEvent(new Event('pagehide')));
  const mid=await chk.evaluate(()=>window.scoreMessages.map(m=>m.score));assert.equal(mid.length,1);assert.equal(mid[0],(await st(chk)).score);
@@ -169,7 +195,7 @@ async function main(){
 
  // 回帰: 成功→失敗→成功で、連続倍率の表示が同じ文言でも再び現れる。
  const combo=await open('http://127.0.0.1:4173/?debug=1&top=98');
- await combo.click('#bStart');await combo.waitForFunction(()=>!window.__pz.state().busy);
+ await startWithCompanion(combo);await combo.waitForFunction(()=>!window.__pz.state().busy);
  const comboState=()=>combo.locator('#combo').evaluate(e=>({hidden:e.classList.contains('none'),text:e.textContent,opacity:getComputedStyle(e).opacity}));
  assert((await comboState()).hidden,'no multiplier before the first print');
  await solve(combo);await combo.waitForFunction(()=>!window.__pz.state().busy);
@@ -193,7 +219,7 @@ async function main(){
  assert.equal(await entry.locator('iframe').count(),0);
  assert.equal(await entry.locator('#who').textContent(),'テスト刷り師');
  assert.equal(await entry.evaluate(()=>getComputedStyle(document.querySelector('#app')).position),'fixed','game styles are applied');
- await entry.click('#bStart');await entry.waitForFunction(()=>!window.__pz.state().busy);await solve(entry);
+ await startWithCompanion(entry);await entry.waitForFunction(()=>!window.__pz.state().busy);await solve(entry);
  await entry.waitForFunction(()=>!window.__pz.state().busy);
  await entry.evaluate(()=>window.__pz.setLives(1));await entry.click('#bPrint');
  await entry.waitForFunction(()=>window.scoreMessages.length===1);

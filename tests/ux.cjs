@@ -1,3 +1,4 @@
+const startWithCompanion=require('./choose-companion.cjs');
 // 加点の知らせ・結果の表示が、狭い画面でも欠けず、古い値のまま残らないこと。
 // 注文とむだなしは外した。おたすけは10枚ごとの記念で1つ増える。
 const assert=require('node:assert/strict');
@@ -27,7 +28,7 @@ async function main(){
   const noOld=t=>assert(!/注文|むだなし/.test(t),'orders and the neat bonus are gone: '+t);
 
   /* ---- 結果: ベストと同点のとき「あと0点」を出さない ---- */
-  await page.click('#bStart');await end();
+  await startWithCompanion(page);await end();
   assert.equal(await page.locator('#oCompare').textContent(),'');
   await page.click('#bRetry');await end();
   assert.equal(await page.locator('#oCompare').textContent(),'前回と同じ点','a tie with the best does not say 0 points to go'+tag);

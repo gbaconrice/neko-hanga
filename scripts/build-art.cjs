@@ -3,7 +3,8 @@
    node scripts/build-art.cjs --background border-atlas.png 18
    node scripts/build-art.cjs --embed
    npm install --no-save sharp */
-const fs=require('node:fs'),path=require('node:path'),sharp=require('sharp');
+const fs=require('node:fs'),path=require('node:path');
+let sharp; // The --embed path delegates and never processes images.
 const root=path.join(__dirname,'..'),htmlPath=path.join(root,'index.html');
 const catalog=JSON.parse(fs.readFileSync(path.join(root,'art/catalog.json'),'utf8'));
 const files=catalog.map(w=>w.file),inks=[[215,132,121],[59,104,99],[196,160,82],[245,239,222]];
@@ -27,6 +28,7 @@ async function main(){
  fs.mkdirSync(path.join(root,'art/finish'),{recursive:true});fs.mkdirSync(path.join(root,'art/shapes'),{recursive:true});
  const mode=process.argv[2];
  if(mode==='--import'||mode==='--background'){
+  sharp=require('sharp');
   const input=process.argv[3],offset=Number(process.argv[4]);
   if(!input||!Number.isInteger(offset)||offset<0||offset+9>files.length)throw Error('Offset must select nine catalog entries');
   const meta=await sharp(input).metadata();

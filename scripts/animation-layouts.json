@@ -1,4 +1,23 @@
 {
- "noFront": ["ragdoll-roll","ragdoll-spring","bobtail-festival","persian-snow","norwegian-chime","russian-wash","bengal-leap","bobtail-noses","norwegian-leaf","bombay-feather","calico-rain","siamese-fan","abyssinian-maple","tuxedo-lighthouse","bengal-stargaze","calico-tailnest","norwegian-kittenclimb","american-leafsiblings","bombay-grooming","fold-siblings","maine-pawtouch","bobtail-follow","russian-angora-scarf","ocicat-siamese-ribbon","munchkin-oriental-back","patch-bombay-tail","sphynx-listening","calico-daruma","abyssinian-origami","american-koinobori","maine-snowrabbit","cornish-waves","selkirk-cloud","manx-spool","norwegian-diagonal","munchkin-bigleaf","siamese-lowstalk","british-rearloaf","persian-portrait","sphynx-lookback","kitten-trio","tuxedo-mentor"],
- "propSide": {"winter":"left","lantern":"right","guitar":"right","sphynx-rose":"left","norwegian-moon":"right","abyssinian-pot":"left","munchkin-milk":"right","fold-alarm":"left","british-goldfish":"left","abyssinian-honey":"right","ocicat-watering":"right","chartreux-ginkgo":"right","angora-musicbox":"left"}
+ "noFront": ["persian-hammock","ragdoll-breadbag",
+    "ragdoll-roll","bobtail-festival","persian-snow","norwegian-chime","russian-wash","bengal-leap","bobtail-noses","norwegian-leaf","bombay-feather","calico-rain","siamese-fan","abyssinian-maple","tuxedo-lighthouse","bengal-stargaze","calico-tailnest","norwegian-kittenclimb","american-leafsiblings","bombay-grooming","fold-siblings","maine-pawtouch","bobtail-follow","russian-angora-scarf","ocicat-siamese-ribbon","munchkin-oriental-back","patch-bombay-tail","sphynx-listening","calico-daruma","abyssinian-origami","american-koinobori","maine-snowrabbit","cornish-waves","selkirk-cloud","manx-spool","norwegian-diagonal","munchkin-bigleaf","siamese-lowstalk","british-rearloaf","persian-portrait","sphynx-lookback","kitten-trio","tuxedo-mentor"],
+ "poseRegistration": {
+   "moon": {"x":192,"baseline":263,"scale":0.88},
+   "ragdoll-breadbag": {"x":192,"baseline":274}
+ },
+ "poseProp": {
+   "abyssinian-tallstretch": {"x":248,"bottom":270,"width":83},
+   "rocking-horse": {"x":206,"bottom":350,"width":265,"catX":164,"catBaseline":253,"catScale":0.92,"frontOfCat":false},
+   "guitar": {"x":223,"bottom":315,"width":175,"catX":158,"frontOfCat":true},
+   "lantern": {"x":245,"bottom":313,"width":108,"catX":150,"frontOfCat":false,"sourceCrop":[152,114,188,268]}
+ },
+ "propSide": {"winter":"left","lantern":"right","guitar":"right","sphynx-rose":"left","norwegian-moon":"right","munchkin-milk":"right","fold-alarm":"left","british-goldfish":"left","abyssinian-honey":"right","ocicat-watering":"right","chartreux-ginkgo":"right","angora-musicbox":"left"},
+ "propPlacement": {
+  "lykoi-basket": {"anchor": 292, "baseline": 288, "maxWidth": 114, "maxHeight": 115, "catBaseline": 274},
+  "fold-dough": {"anchor": 205, "baseline": 327, "maxWidth": 188, "maxHeight": 96, "catBaseline": 274},
+  "ragdoll-spring": {"anchor": 304, "baseline": 295, "maxWidth": 108, "maxHeight": 128, "catBaseline": 294},
+  "munchkin-cocoa": {"anchor": 320, "baseline": 294, "maxWidth": 110, "maxHeight": 141, "catBaseline": 274},
+  "abyssinian-pot": {"anchor": 185, "baseline": 376, "maxWidth": 223, "maxHeight": 150, "catBaseline": 251, "catAnchor": 192},
+  "fold-snowcabin": {"anchor": 196, "baseline": 314, "maxWidth": 158, "maxHeight": 86, "catBaseline": 268, "catAnchor": 201, "catWidth": 120}
+ }
 }

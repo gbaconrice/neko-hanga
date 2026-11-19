@@ -1,3 +1,4 @@
+const startWithCompanion=require('./choose-companion.cjs');
 // 中毒性の仕掛け: ラストチャンス、フィーバー、惜しい表示、刷った手ごたえ、★特色のくじ感、前回との比較。
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -18,7 +19,7 @@ async function main(){
  const align=()=>page.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});
  const toast=()=>page.locator('#toast').textContent();
  await page.evaluate(()=>window.__pz.rareOff(true)); // ★特色のランダム出現を止める(★の確認は forceSp で行う)
- await page.click('#bStart');await idle();
+ await startWithCompanion(page);await idle();
 
  // つまみの音は、合う位置に近づくほど高くなる。
  const tick=await page.evaluate(()=>{const c=window.__pz.cur();return {sol:c.sol[0]}});

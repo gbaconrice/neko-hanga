@@ -10,7 +10,13 @@ for(const w of catalog){
  animation.push(uri('art/animation/'+w.file+'.webp','image/webp'));
 }
 let source=fs.readFileSync(html,'utf8');
-for(const [name,body]of Object.entries({WORKS:'var W='+JSON.stringify(catalog)+';',ART_DATA:'var ART_DATA='+JSON.stringify(art)+';',FINISH_DATA:'var FINISH_DATA='+JSON.stringify(finish)+',ANIMATION_DATA='+JSON.stringify(animation)+';',AUDIO_DATA:'var CAT_AUDIO='+JSON.stringify(uri('sounds/cat-soft.mp3','audio/mpeg'))+';'})){
+// Retain the shipped sounds inside index.html. The audio source files are not
+// needed to rebuild the artwork, and are not distributed standalone.
+for(const name of ['AUDIO_DATA','VOICE_VARIANTS']){
+ const pattern=new RegExp('/\\* '+name+'_START \\*/[\\s\\S]*?/\\* '+name+'_END \\*/','g');
+ if([...source.matchAll(pattern)].length!==1)throw Error('Missing or ambiguous embedded audio block '+name);
+}
+for(const [name,body]of Object.entries({WORKS:'var W='+JSON.stringify(catalog)+';',ART_DATA:'var ART_DATA='+JSON.stringify(art)+';',FINISH_DATA:'var FINISH_DATA='+JSON.stringify(finish)+',ANIMATION_DATA='+JSON.stringify(animation)+';'})){
  const pattern=new RegExp('/\\* '+name+'_START \\*/[\\s\\S]*?/\\* '+name+'_END \\*/');
  if(!pattern.test(source))throw Error('Missing embedded block '+name);
  source=source.replace(pattern,()=>`/* ${name}_START */\n${body}\n/* ${name}_END */`);
