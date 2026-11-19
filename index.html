@@ -616,10 +616,11 @@ function topInset(){
 function cfg(n){
   if(n<3) return {tier:0,mov:1,rot:0,scl:0,links:0,u:2.6,range:4,time:40};
   if(n<7) return {tier:1,mov:2,rot:0,scl:0,links:0,u:2.2,range:4,time:45};
-  if(n<12)return {tier:2,mov:2,rot:1,scl:0,links:0,u:1.9,range:5,time:45};
-  if(n<18)return {tier:3,mov:2,rot:2,scl:0,links:1,u:1.6,range:5,time:42,min:32};
-  if(n<25)return {tier:4,mov:2,rot:1,scl:1,links:2,u:1.5,range:5,time:42,min:34};
-  return {tier:5,mov:2,rot:1,scl:1,links:Math.min(5,3+((n-25)/6|0)),u:Math.max(1,1.5-(n-25)*.03),range:6,time:Math.max(24,40-(n-25)*.8),min:Math.max(TIME_MIN,32-(n-25)*.6)};
+  // 新しい操作を覚える最初の2枚は、同時に別の負荷を増やさない。
+  if(n<12)return {tier:2,mov:2,rot:1,scl:0,links:0,u:1.9,range:n<9?4:5,turnRange:n<9?3:5,time:45};
+  if(n<18)return {tier:3,mov:2,rot:n<14?1:2,scl:0,links:1,u:1.6,range:5,time:42,min:32};
+  if(n<25)return {tier:4,mov:2,rot:1,scl:1,links:n<20?1:2,u:1.5,range:5,scaleRange:n<20?3:5,time:42,min:34};
+  return {tier:5,mov:2,rot:1,scl:1,links:Math.min(5,3+((n-25)/6|0)),u:Math.max(1,1.5-(n-25)*.03),range:n<27?5:6,time:Math.max(24,40-(n-25)*.8),min:Math.max(TIME_MIN,32-(n-25)*.6)};
 }
 // 称号(刷れた枚数)
 var RANKS=[[0,'見習い'],[3,'印刷工'],[7,'刷り師'],[12,'職人'],[18,'親方'],[25,'名人'],[35,'人間国宝']];
@@ -1149,7 +1150,7 @@ function newSheet(){
   var n=ax.length,M=ax.map(function(_,i){return ax.map(function(_,j){return i===j?1:0})});
   var L=c.links,guard=0;
   while(L>0&&guard++<60){var j=1+rnd(n-1),i2=rnd(j);if(!M[i2][j]){M[i2][j]=Math.random()<.5?1:-1;L--}}
-  var sol=ax.map(function(){return (1+rnd(c.range))*(Math.random()<.5?1:-1)});
+  var sol=ax.map(function(a){var range=(a.t==='r'?c.turnRange:a.t==='s'?c.scaleRange:0)||c.range;return (1+rnd(range))*(Math.random()<.5?1:-1)});
   cur={va:va,cols:cols(va),ax:ax,M:M,sol:sol,v:ax.map(function(){return 0}),u:c.u,tier:c.tier,moves:0};
   return loadWork(va.mi).then(function(){if(!running||request!==sheetRequest)return;
   lastShownWork=va.mi;

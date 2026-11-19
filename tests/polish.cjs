@@ -4,6 +4,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright');
 const root=path.join(__dirname,'..');
+const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const backdrops=JSON.parse(html.match(/var FINISH_DATA=(\[[^\n]+?\]),ANIMATION_DATA=/)[1]);
 const SDK='window.AgentSDK={user:{getMyUserInfo:()=>Promise.resolve({data:{name:"テスト刷り師"}})}};';
 async function main(){
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||(fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),headless:true,args:['--no-sandbox']});
@@ -88,15 +90,40 @@ async function main(){
  assert.equal(await page.locator('.kn.locked').count(),knobs.length);assert.equal(await page.locator('#paper.aligned').count(),1);
  assert((await page.locator('#paper .lk').count())>=4,'rings pulse on the registration marks');
  // 完成の瞬間: ローラーが左から通り、通った所から完成図に替わる。
+ const selected=await page.evaluate(()=>window.__pz.cur().va);
+ const rightStrip=()=>page.locator('#cv').evaluate(c=>{
+  const width=Math.ceil(c.width/8),copy=document.createElement('canvas');copy.width=width;copy.height=c.height;
+  copy.getContext('2d').drawImage(c,c.width-width,0,width,c.height,0,0,width,c.height);
+  return copy.toDataURL();
+ });
+ const unrolledRight=await rightStrip();
  await page.click('#bPrint');
+ assert.equal(await rightStrip(),unrolledRight,'the unrolled right edge still matches the live aligned plates');
  assert.equal(await page.locator('#toast b').textContent().then(s=>/^\+\d+$/.test(s)),true,'the gained points are shown large');
  assert.equal(await page.locator('#combo').textContent(),'1連続中　次の得点 ×1.1');
  assert.equal((await page.locator('#toast').textContent()).includes('むだなし'),false,'the neat bonus was removed');
- // ローラーは左から通るので、最後に替わる右上の隅で確かめる
- const corner=()=>page.locator('#cv').evaluate(c=>{const d=c.getContext('2d').getImageData(c.width-5,4,1,1).data;return Math.abs(d[0]-245)+Math.abs(d[1]-239)+Math.abs(d[2]-222)});
- assert((await corner())<12,'the corner is still paper when the print lands');
+ // 淡い角は紙と同じ色にも見える。該当作品の背景と猫の全画素を直接照合する。
  await page.clock.runFor(600);
- assert((await corner())>30,'the background reaches the corner');
+ assert((await st(page)).revealing,'the finished print is still on screen');
+ assert.equal(await page.locator('#paper .roller').count(),0,'the roller has cleared the full canvas');
+ assert.notEqual(await rightStrip(),unrolledRight,'the roller replaces the right edge, too');
+ assert.equal(selected.sp,0,'the first work has no specialty palette');
+ const finish=await page.locator('#cv').evaluate(async(c,{uri,mi,flip})=>{
+  const w=c.width,h=c.height,live=c.getContext('2d').getImageData(0,0,w,h).data;
+  const background=new Image();background.src=uri;await background.decode();
+  const sheet=window.__pz.animationImages[mi],tile=sheet.width/3;
+  const ref=document.createElement('canvas');ref.width=w;ref.height=h;
+  const g=ref.getContext('2d');
+  if(flip){g.translate(w,0);g.scale(-1,1)}
+  for(let frame=0;frame<6;frame++){
+   g.drawImage(background,0,0,w,h);
+   g.drawImage(sheet,(frame%3)*tile,Math.floor(frame/3)*tile,tile,tile,0,0,w,h);
+   const wanted=g.getImageData(0,0,w,h).data;
+   if(wanted.every((v,i)=>v===live[i]))return frame;
+  }
+  return -1;
+ },{uri:backdrops[selected.mi],mi:selected.mi,flip:selected.flip});
+ assert(finish>=0,'the full finished canvas matches the selected backdrop and one of its authored frames, including all corners');
  await page.waitForFunction(()=>!window.__pz.state().busy);
 
  // 完成図: すぐのタップでは送られず、少し見せたあとはタップで次へ進む。
@@ -223,7 +250,7 @@ async function main(){
 
  // GRAVITY用の入口: 5000文字未満。iframeなしで本体を展開し、そのまま遊べて得点を送る。
  // フォントのライセンス: 配布するHTMLに著作権表記とOFL全文が入り、fonts/OFL.txt と一致する。
- const html=fs.readFileSync(path.join(root,'index.html'),'utf8'),ofl=fs.readFileSync(path.join(root,'fonts/OFL.txt'),'utf8').replace(/\r\n/g,'\n').trim();
+ const ofl=fs.readFileSync(path.join(root,'fonts/OFL.txt'),'utf8').replace(/\r\n/g,'\n').trim();
  const fontBlock=html.match(/\/\* FONT_START \*\/([\s\S]*?)\/\* FONT_END \*\//)[1];
  assert(fontBlock.includes(ofl),'index.html carries the full OFL text');
  assert(ofl.startsWith('Copyright 2021 The Zen Maru Gothic Project Authors')&&ofl.includes('SIL OPEN FONT LICENSE Version 1.1'));

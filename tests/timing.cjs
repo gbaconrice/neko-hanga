@@ -61,8 +61,23 @@ async function main(){
 
  /* ---- 段階の境目と後半: 締め切りは操作量から決まり、最速でめろめろに届く ---- */
  const late=[];
- for(const n of [11,12,17,18,24,25,26,30,40]){
+ const stages=[
+  [7,1,0,0,{default:4,r:3}],[8,1,0,0,{default:4,r:3}],[9,1,0,0,{default:5}],[11,1,0,0,{default:5}],
+  [12,1,0,1,{default:5}],[13,1,0,1,{default:5}],[14,2,0,1,{default:5}],[17,2,0,1,{default:5}],
+  [18,1,1,1,{default:5,s:3}],[19,1,1,1,{default:5,s:3}],[20,1,1,2,{default:5}],[24,1,1,2,{default:5}],
+  [25,1,1,3,{default:5}],[26,1,1,3,{default:5}],[27,1,1,3,{default:6}],[30,1,1,3,{default:6}],[40,1,1,5,{default:6}]];
+ for(const [n,rotation,scale,links,caps] of stages){
   s=await goTo(n);assert.equal(s.prints,n);
+  // 各操作を覚える2枚を区別する。ここでは実際に出た紙のつまみ・連動を確かめる。
+  const steps=await page.evaluate(()=>{
+   const {ax,M,sol}=window.__pz.cur();
+   const kinds=ax.map(a=>a.t);
+   return {kinds,links:M.reduce((v,row,i)=>v+row.filter((x,j)=>j!==i&&x).length,0),sol};
+  });
+  assert.equal(steps.kinds.filter(t=>t==='r').length,rotation,'rotation at '+(n+1));
+  assert.equal(steps.kinds.filter(t=>t==='s').length,scale,'scale at '+(n+1));
+  assert.equal(steps.links,links,'links at '+(n+1));
+  assert(steps.sol.every((v,j)=>Math.abs(v)>=1&&Math.abs(v)<=(caps[steps.kinds[j]]??caps.default)),'offset range at '+(n+1));
   near(s.tMax,s.tMaxBase+s.lastCarry,'carry is added on top at n='+n);
   assert(s.tMaxBase>=oldTime(n)-1e-9,'the limit never gets shorter than before at n='+n);
   const fit=n<35?2.4:Math.max(2,2.4-(n-35)*.4/25);near(s.tMaxBase,Math.max(oldTime(n),fit*s.best+4),'limit = max(old, factor x fastest + 4) at n='+n);
