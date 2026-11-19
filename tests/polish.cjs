@@ -14,6 +14,14 @@ async function main(){
   await page.addInitScript(()=>{window.scoreMessages=[];window.addEventListener('message',e=>{if(e.data?.type==='gameOver')window.scoreMessages.push(e.data)})});
   await page.route('https://cdn.gravity.place/**',r=>r.fulfill({contentType:'text/javascript',body:SDK}));
   await page.route('https://gbaconrice.github.io/neko-hanga/index.html',r=>r.fulfill({contentType:'text/html; charset=utf-8',headers:{'access-control-allow-origin':'*'},body:fs.readFileSync(path.join(root,'index.html'))}));
+  await page.addInitScript(()=>{
+   window.logoEvents=[];
+   for(const type of ['animationstart','animationend','animationcancel']){
+    document.addEventListener(type,e=>{
+     if(e.target.closest?.('#logo .e-art'))logoEvents.push({type,name:e.animationName,part:e.target.className});
+    },true);
+   }
+  });
   await page.clock.install();
   await page.goto(url);
   await page.waitForFunction(()=>window.__pz?.state().artReady);await page.evaluate(()=>window.__pz.tapGuard(0));
@@ -168,8 +176,13 @@ async function main(){
  // 実タッチでEの文字を5回。絵のタップや ?check=1 では代用しない。
  const chk=await open('http://127.0.0.1:4173/?debug=1&top=98',{width:320,height:568},true);
  await chk.locator('#logo.e-ready').waitFor();
- await chk.clock.runFor(1300);
- assert.equal(await chk.locator('#logo.e-run').count(),0);
+ await chk.waitForFunction(()=>!document.getElementById('logo').classList.contains('e-run'));
+ const logoEvents=await chk.evaluate(()=>window.logoEvents);
+ assert.deepEqual(logoEvents.filter(e=>e.type==='animationstart').map(e=>e.part),
+  ['e-ne','e-ko','e-han','e-ga','e-seal'],'cold title displays each letter then the seal on the actual page');
+ assert(logoEvents.some(e=>e.name==='nekoTitleEPress'&&e.type==='animationend'),'the seal actually finishes');
+ assert(!logoEvents.some(e=>e.name==='nekoTitleEPress'&&e.type==='animationcancel'),'no early seal cancellation');
+ assert.equal(await chk.locator('#logoEAsset').evaluate(el=>getComputedStyle(el).opacity),'1');
  assert.equal(await chk.locator('#check.on').count(),0);
  const logoBox=await chk.locator('#logo').boundingBox();
  assert(logoBox?.width>0&&logoBox?.height>0);
