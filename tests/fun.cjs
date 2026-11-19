@@ -1,3 +1,4 @@
+const startWithCompanion=require('./choose-companion.cjs');
 // 楽しさの追加分: ローラー、ヤレ紙、時間の持ち越し、オルゴールのBGM。
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -16,7 +17,7 @@ async function main(){
  const idle=()=>page.waitForFunction(()=>{const s=window.__pz.state();return s.running&&!s.busy});
  const align=()=>page.evaluate(()=>{const c=window.__pz.cur();c.v=c.sol.slice()});
 
- await page.click('#bStart');await idle();
+ await startWithCompanion(page);await idle();
 
  // 11. オルゴールが鳴り始める。
  await page.clock.runFor(300);
@@ -84,7 +85,7 @@ assert(!(await page.locator('#paper').evaluate(e=>e.classList.contains('gone')))
  await page.click('#bHome');assert(!(await st()).music,'the title is quiet');
  // 小さい画面でも、持ち越しの表示が上部の余白にかからない。
  await page.setViewportSize({width:320,height:568});
- await page.click('#bStart');await idle();
+ await startWithCompanion(page);await idle();
  const ct=await page.evaluate(()=>{const c=document.querySelector('#carry').getBoundingClientRect();return {top:c.top,right:c.right,w:innerWidth}});
  assert(ct.top>=74&&ct.right<=ct.w,'the carried-time label fits '+JSON.stringify(ct));
  assert.deepEqual(errors,[]);

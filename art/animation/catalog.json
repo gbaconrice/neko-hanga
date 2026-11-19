@@ -43,7 +43,7 @@
     "file": "moon",
     "frames": 6,
     "source": "atlas-02.webp",
-    "catPixels": 34405,
+    "catPixels": 27437,
     "front": false,
     "floor": false
   },
@@ -100,7 +100,7 @@
     "frames": 6,
     "source": "atlas-06.webp",
     "catPixels": 32286,
-    "front": true,
+    "front": false,
     "floor": false
   },
   {
@@ -115,7 +115,7 @@
     "file": "rocking-horse",
     "frames": 6,
     "source": "atlas-07.webp",
-    "catPixels": 27864,
+    "catPixels": 23665,
     "front": true,
     "floor": false
   },
@@ -132,7 +132,7 @@
     "frames": 6,
     "source": "atlas-08.webp",
     "catPixels": 38663,
-    "front": true,
+    "front": false,
     "floor": false
   },
   {
@@ -388,7 +388,7 @@
     "frames": 6,
     "source": "atlas-27.webp",
     "catPixels": 23711,
-    "front": false,
+    "front": true,
     "floor": false
   },
   {
@@ -692,7 +692,7 @@
     "frames": 6,
     "source": "atlas-40.webp",
     "catPixels": 37229,
-    "front": true,
+    "front": false,
     "floor": false
   },
   {
@@ -707,7 +707,7 @@
     "file": "fold-snowcabin",
     "frames": 6,
     "source": "atlas-44.webp",
-    "catPixels": 40307,
+    "catPixels": 10336,
     "front": true,
     "floor": false
   },
@@ -764,7 +764,7 @@
     "frames": 6,
     "source": "atlas-47.webp",
     "catPixels": 32130,
-    "front": true,
+    "front": false,
     "floor": false
   },
   {
@@ -876,7 +876,7 @@
     "frames": 6,
     "source": "atlas-54.webp",
     "catPixels": 32356,
-    "front": false,
+    "front": true,
     "floor": false
   },
   {
@@ -908,7 +908,7 @@
     "frames": 6,
     "source": "atlas-56.webp",
     "catPixels": 27980,
-    "front": false,
+    "front": true,
     "floor": false
   },
   {
@@ -1036,7 +1036,7 @@
     "frames": 6,
     "source": "atlas-60.webp",
     "catPixels": 26941,
-    "front": false,
+    "front": true,
     "floor": false
   },
   {
@@ -1132,7 +1132,7 @@
     "frames": 6,
     "source": "atlas-68.webp",
     "catPixels": 30771,
-    "front": false,
+    "front": true,
     "floor": false
   },
   {
@@ -1140,7 +1140,7 @@
     "frames": 6,
     "source": "atlas-69.webp",
     "catPixels": 30874,
-    "front": false,
+    "front": true,
     "floor": false
   },
   {
@@ -1156,7 +1156,7 @@
     "frames": 6,
     "source": "atlas-70.webp",
     "catPixels": 19664,
-    "front": false,
+    "front": true,
     "floor": false
   },
   {
@@ -1164,7 +1164,7 @@
     "frames": 6,
     "source": "atlas-70.webp",
     "catPixels": 23443,
-    "front": false,
+    "front": true,
     "floor": false
   },
   {
@@ -1187,7 +1187,7 @@
     "file": "himalayan-cushion",
     "frames": 6,
     "source": "atlas-74.webp",
-    "catPixels": 34933,
+    "catPixels": 31991,
     "front": true,
     "floor": false
   },

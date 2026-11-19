@@ -1,3 +1,4 @@
+const startWithCompanion=require('./choose-companion.cjs');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
 const {chromium}=require('playwright');
@@ -37,7 +38,7 @@ async function main(){
  // is invalid. The four-color puzzle palette is checked in animation.cjs.
  assert.equal(art.unique,total);assert(art.min>.2,JSON.stringify(art));
  await page.screenshot({path:'/workspace/scratch/title.png'});
- await page.click('#bStart');await page.waitForFunction(()=>!window.__pz.state().busy);
+ await startWithCompanion(page);await page.waitForFunction(()=>!window.__pz.state().busy);
  await page.waitForFunction(()=>window.__pz.state().meows===1);
  const bounds=await page.locator('.kn').first().boundingBox();
  const before=await page.evaluate(()=>window.__pz.cur().v[0]);
@@ -71,7 +72,7 @@ async function main(){
  }),'printed composition matches its artwork');
  await page.screenshot({path:'/workspace/scratch/printed.png'});
  await page.click('#mute');
- assert.equal(await page.locator('#mute').textContent(),'音 OFF');
+ assert.equal(await page.locator('#mute').getAttribute('aria-pressed'),'false');
  await page.waitForFunction(()=>!window.__pz.state().busy);
  // Every difficulty tier stays playable on short embedded phone screens.
  for(const prints of [3,7,12,18,25,40]){

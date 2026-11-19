@@ -1,1 +1,5 @@
 node_modules/
+
+# Local-only recordings from the licensed source
+/sounds/cat-clear.mp3
+/sounds/cat-murmur.mp3

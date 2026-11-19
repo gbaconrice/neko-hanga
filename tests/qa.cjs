@@ -14,7 +14,7 @@ async function main(){
   await page.route('https://cdn.gravity.place/**',r=>r.fulfill({contentType:'text/javascript',body:SDK}));
   await page.addInitScript(()=>{window.__posts=[];window.addEventListener('message',e=>{if(e.data&&e.data.type==='gameOver')window.__posts.push(e.data.score)})});
   await page.clock.install();
-  await page.goto('http://127.0.0.1:4173/?debug=1&top=74');
+  await page.goto('http://127.0.0.1:4173/?debug=1&top='+(h>=812?98:74));
   await page.waitForFunction(()=>window.__pz?.state().artReady);
   await page.evaluate(()=>{
    window.__pz.rareOff(true);
@@ -49,7 +49,19 @@ async function main(){
 
   /* ---- 連打: はじめる ---- */
   let p=await low('#bStart');
-  await tap(p[0],p[1]);await run(150);await tap(p[0],p[1]);await run(100);await idle();
+  await tap(p[0],p[1]);await run(150);await tap(p[0],p[1]);
+  const modal=page.locator('#companionPick[open]');
+  assert.equal(await modal.count(),1,'rapid start taps show just one chooser'+tag);
+  assert.equal((await st()).running,false,'the title tap cannot choose a cat'+tag);
+  const choice='#companionPick button[data-cat-id="white"]';
+  await page.locator(choice).tap();
+  assert.equal(await modal.count(),1,'an early tap on a real option is held back'+tag);
+  assert.equal((await st()).running,false);
+  await run(450);const cb=await box(choice),cx=cb.x+cb.width/2,cy=cb.y+cb.height/2;
+  await tap(cx,cy);await run(150);await tap(cx,cy);await run(100);await idle();
+  assert.equal(await modal.count(),0);
+  assert.equal(await page.locator('.paw svg[data-cat-id="white"]').count(),3);
+  assert.equal(await page.locator('#companionHud').getAttribute('alt'),'相棒：白猫');
   let s=await st();
   assert.equal(s.lives,3,'a double tap on the start button does not misprint the first sheet'+tag);
   // 2度目のタップがつまみに当たる配置でも、つまみは動かず、最初の一枚の「触るまで時間が減らない」も保たれる
@@ -160,7 +172,7 @@ async function main(){
 
   /* ---- 音の切り替えが遷移のあとも保たれる ---- */
   await page.locator('#mute').tap();
-  assert.equal(await page.locator('#mute').textContent(),'音 OFF');assert.equal((await st()).music,false);
+  assert.equal(await page.locator('#mute').getAttribute('aria-pressed'),'false');assert.equal((await st()).music,false);
   await page.evaluate(()=>window.__pz.setLives(1)); // ラストチャンスなしで終わらせる
   await run(450);await print();await run(400);
   assert.equal(await on('over'),true);await run(2500);
@@ -170,12 +182,12 @@ async function main(){
   assert.equal(await on('title'),true,'a double tap on the title button does not start a game'+tag);assert.equal((await st()).running,false);
   await run(450);await page.locator('#bStart').tap();await run(100);await idle();await run(450);
   let m=await st();
-  assert.equal(await page.locator('#mute').textContent(),'音 OFF','mute survives result, title and a new game'+tag);assert.equal(await page.locator('#mute.off').count(),1);assert.equal(m.music,false);
+  assert.equal(await page.locator('#mute').getAttribute('aria-pressed'),'false','mute survives result, title and a new game'+tag);assert.equal(await page.locator('#mute.off').count(),1);assert.equal(m.music,false);
   await page.evaluate(()=>{vis(true);vis(false)});await align();await print();await run(2800);await idle();
   let m2=await st();
   assert.equal(m2.music,false,'returning from the background keeps the sound off');assert.equal(m2.musicNotes,m.musicNotes);assert.equal(m2.audioPlayed,m.audioPlayed,'no voice while muted');
   await page.locator('#mute').tap();
-  assert.equal(await page.locator('#mute').textContent(),'音 ON');assert.equal((await st()).music,true,'unmuting brings the music back');
+  assert.equal(await page.locator('#mute').getAttribute('aria-pressed'),'true');assert.equal((await st()).music,true,'unmuting brings the music back');
   await page.context().close();
  }
  assert.deepEqual(errors,[]);

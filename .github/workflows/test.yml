@@ -31,3 +31,6 @@ jobs:
       - run: node tests/qa.cjs
       - run: node tests/ux.cjs
       - run: node tests/timing.cjs
+      - run: node tests/work-bag.cjs
+      - run: node tests/voice-variants.cjs
+      - run: node tests/loader-label.cjs
