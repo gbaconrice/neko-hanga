@@ -12,6 +12,14 @@ const root=path.join(__dirname,'..'),dir=path.join(root,'art/animation');
   const file=path.join(dir,w.file+'.webp'),m=await sharp(file).metadata();assert.equal(m.width,1152);assert.equal(m.height,768);
   totalBytes+=fs.statSync(file).size;const frames=[];
   for(let i=0;i<6;i++)frames.push(await sharp(file).extract({left:i%3*384,top:Math.floor(i/3)*384,width:384,height:384}).ensureAlpha().raw().toBuffer());
+  if(w.file==='singapura-stool'){
+   const source=path.join(dir,'sources',w.file);
+   assert(fs.readFileSync(file).equals(fs.readFileSync(path.join(source,'poses.webp'))),'grounded reach uses the checked-in authored poses');
+   assert(fs.readFileSync(path.join(dir,'masks',w.file+'.png')).equals(fs.readFileSync(path.join(source,'cat-mask.png'))),'grounded reach uses the authored cat mask');
+   for(const f of frames)for(let i=0;i<f.length;i+=4)if(f[i+3]){
+    assert(f[i+3]===255&&palette.has((f[i]<<16)|(f[i+1]<<8)|f[i+2]),'each visible pixel can be recolored exactly');
+   }
+  }
   hashes.add(frames[0].toString('base64'));assert.equal(new Set(frames.map(f=>f.toString('base64'))).size,6,w.file+' has six separately drawn poses');
   const mask=await sharp(path.join(dir,'masks',w.file+'.png')).greyscale().raw().toBuffer();let changed=0,outside=0;
   for(let i=0;i<384*384;i++){

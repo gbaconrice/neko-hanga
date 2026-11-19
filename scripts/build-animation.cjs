@@ -222,6 +222,16 @@ async function build(scene,source,offset){
  fs.mkdirSync(path.join(dir,'masks'),{recursive:true});await sharp(mask,{raw:{width:384,height:384,channels:1}}).png().toFile(path.join(dir,'masks',scene.file+'.png'));
  return {file:scene.file,frames:6,source:path.basename(source),catPixels:mask.reduce((n,a)=>n+(a>0),0),front:!!(drawnFront||continuity),floor};
 }
+// This scene has a hand-authored grounded reach whose composition is not in
+// atlas-75. Keep that atlas intact for its second scene, somali-birdhouse.
+async function restoreSingapura(dir){
+ const plates=path.join(dir,'sources','singapura-stool'),sprite=path.join(plates,'poses.webp'),mask=path.join(plates,'cat-mask.png');
+ fs.mkdirSync(path.join(dir,'masks'),{recursive:true});
+ fs.copyFileSync(sprite,path.join(dir,'singapura-stool.webp'));
+ fs.copyFileSync(mask,path.join(dir,'masks','singapura-stool.png'));
+ const bits=await sharp(mask).greyscale().raw().toBuffer();
+ return {file:'singapura-stool',frames:6,source:'singapura-stool/poses.webp',catPixels:bits.reduce((n,a)=>n+(a>0),0),front:true,floor:true};
+}
 async function main(){
  const scenes=JSON.parse(fs.readFileSync(scratch?path.join(scratch,'scenes.json'):path.join(root,'art/catalog.json'))),byFile=new Map(scenes.map(s=>[s.file,s]));let manifest=[];
  const dir=path.join(root,'art/animation'),sources=path.join(dir,'sources');fs.mkdirSync(sources,{recursive:true});
@@ -234,7 +244,13 @@ async function main(){
    await sharp({create:{width:1536,height:1536,channels:4,background:'#00000000'}}).composite(tiles).webp({lossless:true,effort:6}).toFile(source);
   }
   canonicalJobs.push({job:j.job,files:j.files,atlas,generatedSource:j.generatedSource||path.basename(j.source)});
-  for(let k=0;k<j.files.length;k++){const scene=byFile.get(j.files[k]);if(!scene)throw Error('Unknown scene '+j.files[k]);const output=path.join(dir,scene.file+'.webp');if(fs.existsSync(output)&&!process.argv.includes('--rebuild'))continue;manifest.push(await build(scene,source,k*8));console.log(scene.file)}
+  for(let k=0;k<j.files.length;k++){
+   const scene=byFile.get(j.files[k]);if(!scene)throw Error('Unknown scene '+j.files[k]);
+   const output=path.join(dir,scene.file+'.webp'),authored=!scratch&&scene.file==='singapura-stool';
+   const complete=fs.existsSync(output)&&(!authored||fs.existsSync(path.join(dir,'masks',scene.file+'.png')));
+   if(complete&&!process.argv.includes('--rebuild'))continue;
+   manifest.push(authored?await restoreSingapura(dir):await build(scene,source,k*8));console.log(scene.file);
+  }
  }
  fs.writeFileSync(path.join(dir,'jobs.json'),JSON.stringify(canonicalJobs,null,2)+'\n');
  const file=path.join(root,'art/animation/catalog.json'),old=fs.existsSync(file)?JSON.parse(fs.readFileSync(file)):[];const combined=new Map(old.map(x=>[x.file,x]));for(const item of manifest)combined.set(item.file,item);fs.writeFileSync(file,JSON.stringify([...combined.values()],null,2)+'\n');
